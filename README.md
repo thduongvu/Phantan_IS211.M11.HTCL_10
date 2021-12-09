@@ -8,10 +8,10 @@ Giảng viên:
  - GVTH. Nguyễn Minh Nhựt
  
 Thành viên nhóm:
- 1. [Phan Thái Tâm](https://www.facebook.com/thaitamphan123) - 19520917  
- 2. [Vũ Thuỳ Dương](https://www.facebook.com/thduongvu1809) - 19521416  
- 3. [Nguyễn Thanh Sang](https://www.facebook.com/NeT7eS) - 19522123
- 4. [Hoàng Văn Tiến Nhật](https://www.facebook.com/tiennhat07102001) - 19521951
+ - [Phan Thái Tâm](https://www.facebook.com/thaitamphan123) - 19520917  
+ - [Vũ Thuỳ Dương](https://www.facebook.com/thduongvu1809) - 19521416  
+ - [Nguyễn Thanh Sang](https://www.facebook.com/NeT7eS) - 19522123
+ - [Hoàng Văn Tiến Nhật](https://www.facebook.com/tiennhat07102001) - 19521951
  
 ----
 #### BÀI TẬP NHÓM
