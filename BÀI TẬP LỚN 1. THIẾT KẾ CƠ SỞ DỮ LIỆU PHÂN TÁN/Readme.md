@@ -30,6 +30,6 @@ THIẾT KẾ CƠ SỞ DỮ LIỆU PHÂN TÁN
 #### THÀNH VIÊN NHÓM
  - [Phan Thái Tâm](https://www.facebook.com/thaitamphan123) - 19520917  
  - [Vũ Thuỳ Dương](https://www.facebook.com/thduongvu1809) - 19521416  
- - [Nguyễn Thanh Sang](https://www.facebook.com/NeT7eS) - 1952  
- - [Hoàng Văn Tiến Nhật](https://www.facebook.com/tiennhat07102001) - 1952
+ - [Nguyễn Thanh Sang](https://www.facebook.com/NeT7eS) - 19522123
+ - [Hoàng Văn Tiến Nhật](https://www.facebook.com/tiennhat07102001) - 19521951
  
