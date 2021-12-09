@@ -24,6 +24,6 @@ Thành viên nhóm:
 
 
 **Bài tập lớn 2:** CƠ CHẾ PHÂN TÁN TRÊN HỆ QUẢN TRỊ NOSQL
-> **Yêu cầu 1:** Giới thiệu về hệ quản trị CSDL NoSQL
-> **Yêu cầu 2:** Cài đặt trên 2 máy trở lên và thực hiện truy vấn giữa hai máy
-> **Yêu cầu 3:** Thao tác dữ liệu qua lại giữa hai máy
+> **Yêu cầu 1:** Giới thiệu về hệ quản trị CSDL NoSQL  
+> **Yêu cầu 2:** Cài đặt trên 2 máy trở lên và thực hiện truy vấn giữa hai máy  
+> **Yêu cầu 3:** Thao tác dữ liệu qua lại giữa hai máy    
