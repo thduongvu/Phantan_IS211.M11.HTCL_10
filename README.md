@@ -8,10 +8,10 @@ Giảng viên:
  - GVTH. Nguyễn Minh Nhựt
  
 Thành viên nhóm:
- - [Phan Thái Tâm](https://www.facebook.com/thaitamphan123) - 19520917  
- - [Vũ Thuỳ Dương](https://www.facebook.com/thduongvu1809) - 19521416  
- - [Nguyễn Thanh Sang](https://www.facebook.com/NeT7eS) - 19522123
- - [Hoàng Văn Tiến Nhật](https://www.facebook.com/tiennhat07102001) - 19521951
+ 1. [Phan Thái Tâm](https://www.facebook.com/thaitamphan123) - 19520917  
+ 2. [Vũ Thuỳ Dương](https://www.facebook.com/thduongvu1809) - 19521416  
+ 3. [Nguyễn Thanh Sang](https://www.facebook.com/NeT7eS) - 19522123
+ 4. [Hoàng Văn Tiến Nhật](https://www.facebook.com/tiennhat07102001) - 19521951
  
 ----
 #### BÀI TẬP NHÓM
@@ -21,6 +21,7 @@ Thành viên nhóm:
 > **Yêu cầu 2:** Viết hàm, thủ tục, ràng buộc toàn vẹn truy vấn trên môi trường phân tán  
 > **Yêu cầu 3:** Demo các mức cô lập (ISOLATION LEVEL) trong môi trường phân tán    
 > **Yêu cầu 4:** Thực hiện tối ưu hóa truy vấn trên môi trường phân tán  **1 câu truy vấn**  đơn giản
+
 
 **Bài tập lớn 2:** CƠ CHẾ PHÂN TÁN TRÊN HỆ QUẢN TRỊ NOSQL
 > **Yêu cầu 1:** Giới thiệu về hệ quản trị CSDL NoSQL
