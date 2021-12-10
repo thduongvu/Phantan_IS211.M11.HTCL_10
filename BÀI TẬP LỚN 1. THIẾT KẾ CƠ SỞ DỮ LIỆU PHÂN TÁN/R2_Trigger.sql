@@ -2,6 +2,17 @@
 --
 --
 -- Trigger 1// Khong the them vao chi tiet hoa don san pham o trang thai "Khong duoc phep ban"
+/*  Boi canh: INVOICELINE, MANAGEMENU_STAFF
+    Noi dung:
+    Bang tam anh huong: 
+    -------------------------------------------------------
+                     | INSERT | DELETE |       UPDATE
+    -------------------------------------------------------
+    INVOICELINE      |   +    |    -   | + (MenuID)
+    -------------------------------------------------------
+    MANAGEMENU_STAFF |   -    |    -   | + (MenuID, Stage)
+*/
+
 CREATE OR REPLACE TRIGGER  TRIGGER_INSERT_UPDATE_ON_INVOICELINE
 BEFORE INSERT OR UPDATE ON CN02.INVOICELINE
 FOR EACH ROW
@@ -29,14 +40,12 @@ WHERE MEMA.MenuID = MESA.MenuID;
 INSERT INTO CN02.INVOICELINE VALUES ('INV18','M35',10,400000);
 INSERT INTO CN02.INVOICELINE VALUES ('INV18','M20',10,300000);
 
-BEGIN
-addInvoiceLine('INV17','ME05',10);
-END;
-BEGIN
-addInvoiceLine('INV17','ME39',5);
-END;
-
--- Trigger 2// 
+-- Trigger 2// Cap nhat thong tin quan ly menu cua nhan vien khi quan ly cap nhat
+/*  Boi canh: 
+    Noi dung:
+    Bang tam anh huong: 
+    
+*/
 CREATE OR REPLACE TRIGGER  TRIGGER_INSERT_UPDATE_ON_MANAGEMENU_MANAGER
 AFTER INSERT OR UPDATE ON CN01.MANAGEMENU_MANAGER
 FOR EACH ROW
