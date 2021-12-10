@@ -30,10 +30,9 @@ WHERE   (MenuID = 'ME25' OR MenuID = 'ME26' OR MenuID = 'ME27' OR MenuID = 'ME28
 
 CONNECT Staff/staff;
 CREATE PUBLIC DATABASE LINK NV_CN01 CONNECT TO Staff IDENTIFIED BY staff USING 'CN01_LINK';
--- SELECT thu du lieu
 SELECT * FROM CN01.MENU@NV_CN01;
 
--- 1// Staff: Tim khach hang mua o ca 2 chi nhanh (co hoa don o ca 2 chi nhanh)
+-- 1// Staff: Tim tat ca khach hang mua o ca 2 chi nhanh
 SELECT DISTINCT CUS1.CustomerID, CustomerName, PhoneNumber
 FROM    CN02.CUSTOMER_INFO CUS1
 JOIN    CN02.INVOICE INV1
@@ -47,7 +46,7 @@ ON      CUS2.CustomerID = INV2.CustomerID;
 SELECT * FROM CN01.INVOICE WHERE CustomerID = '';
 /*CN2*/ SELECT * FROM CN02.INVOICE WHERE CustomerID = '';
 
--- 2// Staff: Tim tat ca khach hang co hoa don tren 500000 o ca 2 chi nhanh (tat ca khach hang co hoa don tren 500000 o chi nhanh 1 hoac chi nhanh 2 hoac ca 2)
+-- 2// Staff: Tim tat ca khach hang co hoa don tren 500000 o moi chi nhanh
 SELECT  CUS1.CustomerID, CustomerName, PhoneNumber
 FROM    CN02.CUSTOMER_INFO CUS1, CN02.INVOICE INV1
 WHERE   CUS1.CustomerID = INV1.CustomerID AND INV1.Total > 500000
@@ -55,13 +54,11 @@ UNION
 SELECT  CUS2.CustomerID, CustomerName, PhoneNumber 
 FROM    CN01.CUSTOMER_INFO@NV_CN01 CUS2, CN01.INVOICE@NV_CN01 INV2
 WHERE   CUS2.CustomerID = INV2.CustomerID AND INV2.Total > 500000;
--- Check
-SELECT * FROM CN01.INVOICE WHERE CustomerID = '';
-/*CN2*/ SELECT * FROM CN02.INVOICE WHERE CustomerID = '';
 
--- 3// Director: Tim mat hang la 'banh ngot' duoc ban o ca 2 chi nhanh (duoc ban o ca chi nhanh 1 va 2)
+-- 3// Director: Tim mat hang la 'banh ngot' duoc ban o ca 2 chi nhanh
 CONNECT Director/director;
 CREATE PUBLIC DATABASE LINK GD_CN01 CONNECT TO Director IDENTIFIED BY director USING 'CN01_LINK';
+
 SELECT  MEMA1.MenuID, ME1.MenuName
 FROM    CN02.MANAGEMENU_MANAGER MEMA1, CN02.MENU ME1
 WHERE   MEMA1.MenuID = ME1.MenuID AND MEMA1.Stage = 1 AND MenuType = 'Banh Ngot'
@@ -74,32 +71,7 @@ ORDER BY MenuID;
 UPDATE CN02.MANAGEMENU_MANAGER SET Stage = 0 WHERE MenuID = 'ME43' OR MenuID = 'Menu44';
 /* Re run query */
 
--- 4// Manager: Tim hoa don mua it nhat 15 san pham o chi nhanh minh
-CONNECT Manager/manager;
-SELECT  *
-FROM    CN02.INVOICE
-WHERE   InvoiceID IN(   SELECT InvoiceID
-                        FROM    CN02.INVOICELINE
-                        WHERE   Quantity >= 15);
--- Check
-SELECT * FROM CN02.INVOICELINE WHERE InvoiceID = '';
-
--- 5// Manager: Co bao nhieu loai san pham duoc ban ra trong thang 11 tai chi nhanh minh
-SELECT  COUNT(DISTINCT MenuID) AS NUMBERofMENUID
-FROM    CN02.INVOICELINE INVL INNER JOIN CN02.INVOICE INV
-ON      INVL.InvoiceID = INV.InvoiceID
-WHERE   to_char(InvoiceDate,'mm') = '11';
-
--- 6// Manager: Tim 1 san pham co luong ban ra thap nhat nam 2021
-SELECT MenuID, MenuName, MenuType, SalePrice
-FROM MENU
-WHERE MenuID = (SELECT MenuID
-                FROM INVOICELINE 
-                GROUP BY MenuID
-                ORDER BY SUM(Quantity) DESC
-                FETCH FIRST 1 ROWS ONLY);
-
--- 7// Director: Tim san pham duoc phep ban o chi nhanh 1 nhung khong duoc phep ban o chi nhanh 2
+-- 4// Director: Tim san pham duoc phep ban o chi nhanh 1 nhung khong duoc phep ban o chi nhanh 2
 CONNECT Director/director;
 SELECT MenuID, MenuName, MenuType
 FROM CN02.MENU
@@ -113,8 +85,30 @@ AND MenuID IN (SELECT MenuID
 /*CN1*/ SELECT * FROM CN01.MANAGEMENU_MANAGER WHERE MenuID = '';
 /*CN2*/ SELECT * FROM CN02.MANAGEMENU_MANAGER WHERE MenuID = '';
 
--- 8// Director: Tim khach hang co tich luy cao nhat va co so lan mua hang nhieu nhat
-/* chay procedure2 truoc khi thuc hien*/
+-- 5// Director: Tim hoa don mua tat ca san pham la 'Ca Phe Italy' (truy van cuc bo)
+SELECT  INV.InvoiceID, InvoiceDate, INFO.CustomerID, CustomerName, Total, INV.EmployeeID, EmployeeName
+FROM    INVOICE INV, CUSTOMER_INFO INFO, EMPLOYEE EMP
+WHERE NOT EXISTS(   SELECT *
+                    FROM MENU ME
+                    WHERE MenuType = 'Ca Phe Italy'
+                    AND NOT EXISTS( SELECT * 
+                                    FROM INVOICELINE INVL
+                                    WHERE INVL.InvoiceID = INV.InvoiceID
+                                    AND INVL.MenuID = ME.MenuID))
+        AND INV.CustomerID = INFO.CustomerID 
+        AND INV.EmployeeID = EMP.EmployeeID;
+-- Check
+SELECT * 
+FROM MENU
+WHERE MenuType = 'Ca Phe Italy';
+
+SELECT  * 
+FROM    INVOICELINE INVL, MENU ME
+WHERE   InvoiceID = 'IN149' AND 
+        INVL.MenuID = ME.MenuID AND
+        MenuType = 'Ca Phe Italy';
+
+-- 6// Director: Tim khach hang co tich luy cao nhat va co so lan mua hang nhieu nhat (truy van cuc bo)
 SELECT  RES.CustomerID, CustomerName, CustomerAddress, Birthday, CustomerType, CumulativeTotal, RES.NUMBERofINVOICE
 FROM (  SELECT          CUSMA.CustomerID, COUNT(InvoiceID) NUMBERofINVOICE
         FROM            CN02.CUSTOMER_MANAGER CUSMA
@@ -127,43 +121,70 @@ WHERE   RES.CustomerID = MANA.CustomerID AND
 ORDER BY CUMULATIVETOTAL DESC
 FETCH FIRST 1 ROWS ONLY;
 
+-- 7// Manager: Tim nhung san pham khong duoc ban trong thang 11 (truy van cuc bo)
+CONNECT Manager/manager;
+SELECT MenuID, MenuName
+FROM MENU 
+WHERE MenuID NOT IN(SELECT MenuID 
+                    FROM INVOICELINE INVL INNER JOIN INVOICE INV
+                    ON INVL.InvoiceID = INV.InvoiceID
+                    WHERE to_char(InvoiceDate,'MM') = '11');
+
+-- 8// Manager: Tim 1 san pham co luong ban ra thap nhat nam 2021
+SELECT MenuID, MenuName, MenuType, SalePrice
+FROM MENU
+WHERE MenuID = (SELECT MenuID
+                FROM INVOICELINE 
+                GROUP BY MenuID
+                ORDER BY SUM(Quantity) DESC
+                FETCH FIRST 1 ROWS ONLY);
+
+-- 9// Manager: Tim hoa don mua it nhat 15 san pham o chi nhanh minh
+SELECT  *
+FROM    CN02.INVOICE
+WHERE   InvoiceID IN(   SELECT InvoiceID
+                        FROM    CN02.INVOICELINE
+                        WHERE   Quantity >= 15);
+-- Check
+SELECT * FROM CN02.INVOICELINE WHERE InvoiceID = '';
+
 --
 -- MAY 02: Tao DBLINK den CN02 voi tai khoan CN01, Staff
 -- MAY 02: Tao DBLINK den CN02 voi tai khoan CN01, Staff
 -- MAY 02: Tao DBLINK den CN02 voi tai khoan CN01, Staff
 --
 
--- 9// Staff: Dua ra thong tin menu, phan tram khuyen mai cao nhat, tong so chi nhanh phan phoi san pham thuoc loai "Tra Sua"
+-- 10// Staff: Dua ra thong tin menu, phan tram khuyen mai cao nhat, tong so chi nhanh phan phoi san pham thuoc loai "Tra Sua"
 CONNECT Staff/staff;
 CREATE PUBLIC DATABASE LINK NV_CN02 CONNECT TO Staff IDENTIFIED BY staff USING 'CN02_LINK';
 
 SELECT  MENU.MenuID, MENU.MenuName, MA.NUMBERofBRANCH, MA.PROMOTION
 FROM    CN02.MENU@Staff_CN02 MENU JOIN (SELECT MenuID, COUNT(BranchID) NUMBERofBRANCH, MAX(Promo) PROMOTION
-                                        FROM (  SELECT * FROM CN02.MANAGEMENU_STAFF@Staff_CN02
+                                        FROM (  SELECT * FROM CN02.MANAGEMENU_STAFF@NV_CN02
                                                 UNION 
                                                 SELECT * FROM CN01.MANAGEMENU_STAFF)
                                         GROUP BY MenuID) MA
                                         ON MENU.MenuID = MA.MenuID
                                         WHERE MenuType = 'Tra Sua';
 
--- 10// Director: Tinh doanh thu tung thang trong nam 2021 cua chi nhanh nay
+-- 11// Manager: Tim khach hang co tri gia hoa don cao nhat trong thang 11 (truy van cuc bo)
+SELECT  InvoiceID, Total, InvoiceDate, K.CustomerID, CustomerName, CustomerType
+FROM    CUSTOMER_INFO K INNER JOIN INVOICE H
+ON      K.CustomerID = H.CustomerID AND 
+        InvoiceID= (SELECT InvoiceID
+                    FROM INVOICE
+                    WHERE Total = ( SELECT MAX(Total)
+                                    FROM INVOICE
+                                    WHERE to_char(InvoiceDate,'MM') = '11')
+                    FETCH FIRST 1 ROWS ONLY)
+
+-- 12// Manager: Tinh doanh thu tung thang trong nam 2021 cua chi nhanh nay
 CONNECT Director/director;
 SELECT  EXTRACT(month FROM InvoiceDate) "MONTH", SUM(Total) AS MONTHLY_REVENUE
 FROM    CN01.INVOICE
 WHERE   to_char(InvoiceDate,'YYYY') = '2021'
 GROUP BY EXTRACT(month FROM InvoiceDate);
 
--- 11// Manager: Tinh doanh thu theo ngay cua cua hang nay
-CONNECT Manager/manager;
-SELECT  InvoiceDate, SUM(Total) AS DAILY_REVENUE
-FROM    CN01.INVOICE
-GROUP BY InvoiceDate;
-
--- 12// Staff: Tinh tong so san pham tren tung loai menu
-CONNECT Staff/staff;
-SELECT  MenuType, COUNT(DISTINCT MenuID) AS TOTAL_PRODUCTS
-FROM    CN01.MENU
-GROUP BY MenuType;
 
 
 
