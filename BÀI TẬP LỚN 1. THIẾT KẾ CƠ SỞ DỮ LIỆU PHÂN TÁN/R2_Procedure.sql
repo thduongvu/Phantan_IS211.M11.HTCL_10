@@ -1,8 +1,10 @@
 -- PROCEDURE
 --
 --
+
 SET SERVEROUTPUT ON SIZE 30000;
 ALTER SESSION SET NLS_DATE_FORMAT =' DD/MM/YYYY ';
+
 CONNECT Director/director;
 
 -- Procedure 1// Them chi tiet hoa don (Moi lan them se tu dong tinh thanh tien va tinh lai tong hoa don) [input: ma hoa don, ma san pham, so luong]
@@ -74,11 +76,13 @@ BEGIN
     WHEN OTHERS THEN
     DBMS_OUTPUT.PUT_LINE(SYSDATE || ' Error: Khong the thuc hien!!');
 END;
+/
 
 -- Run Statement
 BEGIN
     addInvoiceLine('INV40','ME35',10);
 END;
+/
 
 /* ==========================================================
    Them thanh cong: ME35 - Tra Sua Hokkaido
@@ -167,11 +171,13 @@ BEGIN
     WHEN OTHERS THEN  
     DBMS_OUTPUT.PUT_LINE(SYSDATE || ' Error: Khong the thuc hien!!');  
 END; 
+/
 
 -- Run Statement 
 BEGIN
     calculateCumulativeTotal;
 END;
+/
 
 /* ==================================================================
    Cap nhat thanh cong tich luy cua: CUS05 = 1248000 - Silver
@@ -265,11 +271,13 @@ BEGIN
     WHEN OTHERS THEN
     DBMS_OUTPUT.PUT_LINE('Error: Hoa don nay khong ton tai trong he thong!!');
 END;
+/
 
 -- Run Statement
 BEGIN
     printInvoice('INV10');
 END;
+/
 
 /* ---------------------------------------------
               HOA DON: INV40
@@ -391,6 +399,7 @@ END;
 BEGIN
     printCustomerInfo('CUS11');
 END;
+/
 
 /* ---------------------------------------------
          THONG TIN KHACH HANG: CUS11
@@ -454,11 +463,13 @@ BEGIN
     WHEN OTHERS THEN
     DBMS_OUTPUT.PUT_LINE(SYSDATE || ' Error: Khong the thuc hien!!');
 END;
+/
 
 -- Run Statement
 BEGIN
     updateMenuManager('BR15','ME30',0);
 END;
+/
 
 /* =============================================================
   Cap nhat thanh cong tai: BR15 - Riverside Residence

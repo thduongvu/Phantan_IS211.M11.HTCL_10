@@ -1,6 +1,7 @@
 -- TRIGGER
 --
 --
+
 -- Trigger 1// Khong the them vao chi tiet hoa don san pham o trang thai "Khong duoc phep ban"
 /*  Boi canh: INVOICELINE, MANAGEMENU_STAFF
     Noi dung:

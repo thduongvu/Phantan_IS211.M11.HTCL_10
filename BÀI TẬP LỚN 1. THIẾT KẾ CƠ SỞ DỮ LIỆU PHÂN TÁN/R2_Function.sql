@@ -1,6 +1,7 @@
 -- FUNCTION
 --
 --
+
 -- Function 1// Tinh doanh thu hang thang [input: thang]
 CREATE OR REPLACE FUNCTION calculateMonthlyRevenue(in_month IN number)
 RETURN NUMBER
@@ -44,6 +45,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('   Ngay xuat: ' || SYSDATE);
     DBMS_OUTPUT.PUT_LINE('===================================');
 END;
+/
 
 /* ===================================
           THONG KE THANG: 11
@@ -82,6 +84,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('   Ngay xuat: ' || SYSDATE);
     DBMS_OUTPUT.PUT_LINE('==========================================');
 END;
+/
 
 /* ==========================================
          THONG TIN NHAN VIEN: EMP11

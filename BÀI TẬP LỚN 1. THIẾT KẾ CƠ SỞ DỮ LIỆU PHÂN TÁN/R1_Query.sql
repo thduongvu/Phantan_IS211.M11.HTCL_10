@@ -2,9 +2,15 @@
 --
 --
 
--- MAY 01
--- MAY 01
--- MAY 01
+-- Cap nhat mot so san pham khong duoc phep ban o moi chi nhanh, de thuc hien mot so cau truy van lien quan
+-- CN01
+CONNECT Manager/Manager;
+UPDATE  CN01.MANAGEMENU_MANAGER
+SET     Stage = 0
+WHERE   (MenuID = 'ME25' OR MenuID = 'ME26' OR MenuID = 'ME27' OR MenuID = 'ME28' OR MenuID = 'ME29' OR MenuID = 'ME30' OR 
+        MenuID = 'ME31' OR MenuID = 'ME32' OR MenuID = 'ME33' OR MenuID = 'ME34' OR MenuID = 'ME35' OR MenuID = 'ME36' OR
+        MenuID = 'ME37' OR MenuID = 'ME38' OR MenuID = 'ME39' OR MenuID = 'ME40');
+-- CN02
 CONNECT Manager/Manager;
 UPDATE  CN02.MANAGEMENU_MANAGER
 SET     Stage = 0
@@ -12,27 +18,18 @@ WHERE   (MenuID = 'ME30' OR MenuID = 'ME31' OR MenuID = 'ME32' OR MenuID = 'ME33
         MenuID = 'ME36' OR MenuID = 'ME37' OR MenuID = 'ME38' OR MenuID = 'ME39' OR MenuID = 'ME40' OR MenuID = 'ME41' OR
         MenuID = 'ME42' OR MenuID = 'ME43' OR MenuID = 'ME44' OR MenuID = 'ME45');
 
--- MAY 02
--- MAY 02
--- MAY 02
-CONNECT Manager/Manager;
-UPDATE  CN01.MANAGEMENU_MANAGER
-SET     Stage = 0
-WHERE   (MenuID = 'ME25' OR MenuID = 'ME26' OR MenuID = 'ME27' OR MenuID = 'ME28' OR MenuID = 'ME29' OR MenuID = 'ME30' OR 
-        MenuID = 'ME31' OR MenuID = 'ME32' OR MenuID = 'ME33' OR MenuID = 'ME34' OR MenuID = 'ME35' OR MenuID = 'ME36' OR
-        MenuID = 'ME37' OR MenuID = 'ME38' OR MenuID = 'ME39' OR MenuID = 'ME40');
-
 --
--- MAY 01: Tao DBLINK den CN02 voi tai khoan CN02, Staff, Director
--- MAY 01: Tao DBLINK den CN02 voi tai khoan CN02, Staff, Director
--- MAY 01: Tao DBLINK den CN02 voi tai khoan CN02, Staff, Director
+-- CN02: Nguyen Gia Tri
+-- CN02: Nguyen Gia Tri
+-- CN02: Nguyen Gia Tri
 --
 
-CONNECT Staff/staff;
 CREATE PUBLIC DATABASE LINK NV_CN01 CONNECT TO Staff IDENTIFIED BY staff USING 'CN01_LINK';
 SELECT * FROM CN01.MENU@NV_CN01;
 
--- 1// Staff: Tim tat ca khach hang mua o ca 2 chi nhanh
+-- 1// Staff: Tim tat ca khach hang mua o ca hai chi nhanh
+CONNECT Staff/staff;
+
 SELECT DISTINCT CUS1.CustomerID, CustomerName, PhoneNumber
 FROM    CN02.CUSTOMER_INFO CUS1
 JOIN    CN02.INVOICE INV1
@@ -46,7 +43,7 @@ ON      CUS2.CustomerID = INV2.CustomerID;
 SELECT * FROM CN01.INVOICE WHERE CustomerID = '';
 /*CN2*/ SELECT * FROM CN02.INVOICE WHERE CustomerID = '';
 
--- 2// Staff: Tim tat ca khach hang co hoa don tren 500000 o moi chi nhanh
+-- 2// Staff: Tim tat ca khach hang co hoa don tren 500000 o bat ky chi nhanh
 SELECT  CUS1.CustomerID, CustomerName, PhoneNumber
 FROM    CN02.CUSTOMER_INFO CUS1, CN02.INVOICE INV1
 WHERE   CUS1.CustomerID = INV1.CustomerID AND INV1.Total > 500000
@@ -55,8 +52,9 @@ SELECT  CUS2.CustomerID, CustomerName, PhoneNumber
 FROM    CN01.CUSTOMER_INFO@NV_CN01 CUS2, CN01.INVOICE@NV_CN01 INV2
 WHERE   CUS2.CustomerID = INV2.CustomerID AND INV2.Total > 500000;
 
--- 3// Director: Tim mat hang la 'banh ngot' duoc ban o ca 2 chi nhanh
+-- 3// Director: Tim mat hang la 'banh ngot' duoc ban o ca hai chi nhanh
 CONNECT Director/director;
+
 CREATE PUBLIC DATABASE LINK GD_CN01 CONNECT TO Director IDENTIFIED BY director USING 'CN01_LINK';
 
 SELECT  MEMA1.MenuID, ME1.MenuName
@@ -71,6 +69,9 @@ ORDER BY MenuID;
 UPDATE CN02.MANAGEMENU_MANAGER SET Stage = 0 WHERE MenuID = 'ME43' OR MenuID = 'Menu44';
 /* Re run query */
 
+-- 4// Director: Tim san pham duoc phep ban o chi nhanh 1 nhung khong duoc phep ban o chi nhanh 2
+-- 4// Director: Tim san pham duoc phep ban o chi nhanh 1 nhung khong duoc phep ban o chi nhanh 2
+-- 4// Director: Tim san pham duoc phep ban o chi nhanh 1 nhung khong duoc phep ban o chi nhanh 2
 -- 4// Director: Tim san pham duoc phep ban o chi nhanh 1 nhung khong duoc phep ban o chi nhanh 2
 CONNECT Director/director;
 SELECT  MenuID, MenuName, MenuType
@@ -130,9 +131,9 @@ WHERE   MenuID NOT IN(  SELECT  MenuID
                         WHERE   to_char(InvoiceDate,'MM') = '11');
 
 --
--- MAY 02: Tao DBLINK den CN02 voi tai khoan CN01, Staff
--- MAY 02: Tao DBLINK den CN02 voi tai khoan CN01, Staff
--- MAY 02: Tao DBLINK den CN02 voi tai khoan CN01, Staff
+-- CN01: Riverside Residence
+-- CN01: Riverside Residence
+-- CN01: Riverside Residence
 --
 
 -- 8// Staff: Dua ra thong tin menu, phan tram khuyen mai cao nhat, tong so chi nhanh phan phoi san pham thuoc loai "Tra Sua"
