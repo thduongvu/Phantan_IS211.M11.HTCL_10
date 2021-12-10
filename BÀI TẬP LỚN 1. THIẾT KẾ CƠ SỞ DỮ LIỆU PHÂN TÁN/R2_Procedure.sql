@@ -136,7 +136,6 @@ BEGIN
         WHERE CustomerID = cur_cusid;   
   
         IF v_total > 1000000 AND v_total <= 3000000 THEN 
-        BEGIN 
             UPDATE CN02.CUSTOMER_INFO
             SET CUSTOMER_INFO.CustomerType = 'Silver'
             WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
@@ -145,9 +144,7 @@ BEGIN
             SET CUSTOMER_INFO.CustomerType = 'Silver'
             WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
             v_type := 'Silver';
-        END
         ELSIF v_total > 3000000 THEN  
-        BEGIN
             UPDATE CN02.CUSTOMER_INFO
             SET CUSTOMER_INFO.CustomerType = 'Gold'
             WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
@@ -156,7 +153,6 @@ BEGIN
             SET CUSTOMER_INFO.CustomerType = 'Gold'
             WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
             v_type := 'Gold';  
-        END
         END IF;  
         
         IF v_total != 0 THEN
@@ -354,17 +350,13 @@ BEGIN
     FETCH FIRST 1 ROWS ONLY;
 
     IF r_invoice1.InvoiceDate > r_invoice2.InvoiceDate THEN
-    BEGIN
         v_invoicedate := r_invoice1.InvoiceDate;
         v_branchid := r_invoice1.BranchID;
         v_invoiceid := r_invoice1.InvoiceID;
-    END
     ELSE 
-    BEGIN
         v_invoicedate := r_invoice2.InvoiceDate;
         v_branchid := r_invoice2.BranchID;
         v_invoiceid := r_invoice2.InvoiceID;
-    END
     END IF;
     
     SELECT *
@@ -441,19 +433,15 @@ BEGIN
     WHERE BranchID = in_branch AND MenuID = in_menu;
     
     IF in_stage = 0 THEN
-    BEGIN
         UPDATE CN02.MANAGEMENU_STAFF
         SET Status = 'Khong Duoc Phep Ban'
         WHERE BranchID = in_branch AND MenuID = in_menu;
         v_status := 'Khong Duoc Phep Ban';
-    END
     ELSE
-    BEGIN
         UPDATE CN02.MANAGEMENU_STAFF
         SET Status = 'Duoc Phep Ban'
         WHERE BranchID = in_branch AND MenuID = in_menu;
         v_status := 'Duoc Phep Ban';
-    END
     END IF;
     
     DBMS_OUTPUT.PUT_LINE('=============================================================');

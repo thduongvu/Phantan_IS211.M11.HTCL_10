@@ -115,7 +115,6 @@ BEGIN
         WHERE CustomerID = cur_cusid;   
   
         IF v_total > 1000000 AND v_total <= 3000000 THEN  
-        BEGIN
             UPDATE CN02.CUSTOMER_INFO
             SET CUSTOMER_INFO.CustomerType = 'Silver'
             WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
@@ -124,9 +123,7 @@ BEGIN
             SET CUSTOMER_INFO.CustomerType = 'Silver'
             WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
             v_type := 'Silver';
-        END
         ELSIF v_total > 3000000 THEN  
-        BEGIN
             UPDATE CN02.CUSTOMER_INFO
             SET CUSTOMER_INFO.CustomerType = 'Gold'
             WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
@@ -135,7 +132,6 @@ BEGIN
             SET CUSTOMER_INFO.CustomerType = 'Gold'
             WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
             v_type := 'Gold';  
-        END
         END IF;  
         
         IF v_total != 0 THEN
@@ -159,6 +155,78 @@ END;
 5// Fix loi display sql plus //// bat dau bat camera
 
 6// Thuc hien truy van: File: QUERY
+
+7.0// 
+-- Procedure 1// Them chi tiet hoa don (Moi lan them se tu dong tinh thanh tien va tinh lai tong hoa don) [input: ma hoa don, ma san pham, so luong]
+CREATE OR REPLACE PROCEDURE addInvoiceLine (in_inv IN VARCHAR2, 
+                                            in_menu IN VARCHAR2,
+                                            in_quantity IN NUMBER) IS
+    v_total NUMBER;
+    v_price NUMBER;
+    v_menuname CN02.MENU.MenuName%TYPE;
+    v_quantity CN02.INVOICELINE.Quantity%TYPE;
+    v_subtotal CN02.INVOICELINE.SubTotal%TYPE;
+    cur_menuid VARCHAR2(5);
+    CURSOR CUR IS SELECT MenuID
+                    FROM CN02.INVOICELINE 
+                    WHERE InvoiceID = in_inv;
+    v_count NUMBER;
+    
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('==========================================================');
+    
+    SELECT SalePrice, MenuName
+    INTO v_price, v_menuname
+    FROM CN02.MENU
+    WHERE MenuID = in_menu;
+
+    -- Tinh thanh tien: subtotal = quantity * saleprice
+    v_subtotal := v_price * in_quantity;
+    
+    -- Them chi tiet hoa don
+    INSERT INTO CN02.INVOICELINE VALUES (in_inv,in_menu,in_quantity,v_subtotal);
+
+    -- Tinh tong hoa don sau cap nhat
+    SELECT sum(SubTotal) 
+    INTO v_total
+    FROM CN02.INVOICELINE
+    WHERE InvoiceID = in_inv;
+
+    -- Cap nhat tong hoa don
+    UPDATE CN02.INVOICE
+    SET Total =  v_total
+    WHERE InvoiceID = in_inv;
+
+    DBMS_OUTPUT.PUT_LINE('   Them thanh cong: ' || in_menu || ' - ' || v_menuname);
+    DBMS_OUTPUT.PUT_LINE('   So luong: ' || in_quantity);
+    DBMS_OUTPUT.PUT_LINE('   Don gia: ' || v_price);
+    DBMS_OUTPUT.PUT_LINE('   Thanh tien: ' || v_subtotal);
+    DBMS_OUTPUT.PUT_LINE('  ------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('   Tong tien tam tinh: ' || v_total);
+    DBMS_OUTPUT.PUT_LINE('   Chi tiet hoa don: ' || in_inv);
+    v_count := 1;
+    -- In chi tiet hoa don
+    OPEN CUR;
+    LOOP 
+        FETCH CUR INTO cur_menuid;
+        EXIT WHEN CUR%NOTFOUND;
+        SELECT MenuName, Quantity, SubTotal 
+        INTO v_menuname, v_quantity, v_subtotal
+        FROM CN02.INVOICELINE INVOICELINE, CN02.MENU MENU
+        WHERE INVOICELINE.MenuID = MENU.MenuID AND
+              MENU.MenuID = cur_menuid AND
+              INVOICELINE.InvoiceID = in_inv;
+        DBMS_OUTPUT.PUT_LINE('  ' ||  v_count ||'/ '||v_menuname || ' --- ' || v_quantity || ' --- ' || v_subtotal);
+        v_count := v_count + 1;
+    END LOOP;
+    CLOSE CUR;
+    DBMS_OUTPUT.PUT_LINE('==========================================================');
+    
+    EXCEPTION
+    WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE(SYSDATE || ' Error: Khong the thuc hien!!');
+END;
+
 
 7// Trigger: FILE: TRIGGER
 
