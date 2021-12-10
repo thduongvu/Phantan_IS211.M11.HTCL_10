@@ -1,22 +1,22 @@
 -- EXPLAIN QUERY   
 EXPLAIN PLAN FOR
-Select CI.CustomerName, CI.CustomerAddress, BR.BranchName, MN.MenuName
+Select CI.CustomerName, CI.CustomerAddress, MN.MenuName, IL.Subtotal
 From CUSTOMER_INFO CI, INVOICE IV, INVOICELINE IL, BRANCH BR, MENU MN
 Where BR.BranchID = IV.BranchID AND IV.InvoiceID = IL.InvoiceID
             AND MN.MenuID = IL.MenuID AND CI.CustomerID = IV.CustomerID
             AND CI.CustomerAddress = 'Ho Chi Minh' AND BR.BranchID = 'BR02'
-            AND CI.CustomerType = 'Gold' AND MN.MenuType = 'Ca Phe Italy';
+            AND CI.CustomerType = 'Stardard' AND MN.MenuType = 'Ca Phe Italy';
+            
 SELECT PLAN_TABLE_OUTPUT FROM TABLE(DBMS_XPLAN.DISPLAY());
 
--- SELECT /*+ GATHER_PLAN_STATISTICS */ t2.owner, SUM(b.object_id)
--- FROM  big_table b, t2 ,t1
--- WHERE b.object_id = t2.object_id
--- AND   b.data_object_id = t1.data_object_id
--- AND   t1.object_type='TABLE'
--- AND   t2.owner ='SSB'
--- GROUP BY t2.owner;
+SELECT /*+ GATHER_PLAN_STATISTICS */ Select CI.CustomerName, CI.CustomerAddress, MN.MenuName, IL.Subtotal
+From CUSTOMER_INFO CI, INVOICE IV, INVOICELINE IL, BRANCH BR, MENU MN
+Where BR.BranchID = IV.BranchID AND IV.InvoiceID = IL.InvoiceID
+            AND MN.MenuID = IL.MenuID AND CI.CustomerID = IV.CustomerID
+            AND CI.CustomerAddress = 'Ho Chi Minh' AND BR.BranchID = 'BR02'
+            AND CI.CustomerType = 'Stardard' AND MN.MenuType = 'Ca Phe Italy';
  
--- SELECT * FROM TABLE(DBMS_XPLAN.display_cursor(format=>'ALLSTATS LAST'));
+SELECT * FROM TABLE(DBMS_XPLAN.display_cursor(format=>'ALLSTATS LAST'));
 
 ////////////// TO DO LIST 
 ////////////// TO DO LIST 
@@ -35,6 +35,17 @@ GRANT SELECT, INSERT, UPDATE ON CN02.CUSTOMER_INFO TO Director;
 GRANT SELECT, INSERT, UPDATE ON CN02.CUSTOMER_MANAGER TO Director;
 GRANT SELECT, INSERT, UPDATE ON CN02.INVOICE TO Director;
 GRANT SELECT, INSERT, UPDATE ON CN02.INVOICELINE TO Director;
+
+
+GRANT SELECT, INSERT, UPDATE ON MENU TO Director;
+GRANT SELECT, INSERT, UPDATE ON MANAGEMENU_MANAGER TO Director;
+GRANT SELECT, INSERT, UPDATE ON MANAGEMENU_STAFF TO Director;
+GRANT SELECT, INSERT, UPDATE ON EMPLOYEE TO Director;
+GRANT SELECT, INSERT, UPDATE ON BRANCH TO Director;
+GRANT SELECT, INSERT, UPDATE ON CUSTOMER_INFO TO Director;
+GRANT SELECT, INSERT, UPDATE ON CUSTOMER_MANAGER TO Director;
+GRANT SELECT, INSERT, UPDATE ON INVOICE TO Director;
+GRANT SELECT, INSERT, UPDATE ON INVOICELINE TO Director;
 
 GRANT SELECT, INSERT, UPDATE ON CN02.MENU TO Manager;
 GRANT SELECT, INSERT, UPDATE ON CN02.MANAGEMENU_MANAGER TO Manager;
