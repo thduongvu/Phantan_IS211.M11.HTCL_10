@@ -135,7 +135,8 @@ BEGIN
         SET CumulativeTotal = v_total
         WHERE CustomerID = cur_cusid;   
   
-        IF v_total > 1000000 AND v_total <= 3000000 THEN  
+        IF v_total > 1000000 AND v_total <= 3000000 THEN 
+        BEGIN 
             UPDATE CN02.CUSTOMER_INFO
             SET CUSTOMER_INFO.CustomerType = 'Silver'
             WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
@@ -144,7 +145,9 @@ BEGIN
             SET CUSTOMER_INFO.CustomerType = 'Silver'
             WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
             v_type := 'Silver';
+        END
         ELSIF v_total > 3000000 THEN  
+        BEGIN
             UPDATE CN02.CUSTOMER_INFO
             SET CUSTOMER_INFO.CustomerType = 'Gold'
             WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
@@ -153,6 +156,7 @@ BEGIN
             SET CUSTOMER_INFO.CustomerType = 'Gold'
             WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
             v_type := 'Gold';  
+        END
         END IF;  
         
         IF v_total != 0 THEN
@@ -292,11 +296,19 @@ END;
 CREATE OR REPLACE PROCEDURE printCustomerInfo (cusid IN VARCHAR2) AS
     r_customerinfo CN02.CUSTOMER_INFO%ROWTYPE;
     r_customermanager CN02.CUSTOMER_MANAGER%ROWTYPE;
+    r_numberofinvoice1 NUMBER;
+    r_numberofinvoice2 NUMBER;
     r_numberofinvoice NUMBER;
     r_numberofbranch NUMBER;
-    r_invoice CN02.INVOICE%ROWTYPE;
+    r_invoice1 CN02.INVOICE%ROWTYPE;
+    r_invoice2 CN02.INVOICE%ROWTYPE;
     r_branch CN02.BRANCH%ROWTYPE;
+    v_invoicedate CN02.INVOICE.InvoiceDate%ROW;
+    v_branchid CN2.BRANCH.BranchID%ROW;
+    v_invoiceid CN2.INVOICE.InvoiceID%ROW;
 BEGIN
+    r_numberofinvoice := 0; 
+    
     SELECT * 
     INTO r_customerinfo
     FROM CN02.CUSTOMER_INFO 
@@ -309,27 +321,56 @@ BEGIN
     
     -- Dem so luong hoa don da mua
     SELECT count(CustomerID) 
-    INTO r_numberofinvoice
+    INTO r_numberofinvoice1
     FROM CN02.INVOICE
     WHERE CustomerID = cusid;
 
-    -- Dem so luong chi nhanh da mua
-    SELECT count(DISTINCT BranchID) 
-    INTO r_numberofbranch
-    FROM CN02.INVOICE
+    SELECT count(CustomerID) 
+    INTO r_numberofinvoice2
+    FROM CN01.INVOICE@GD_CN01
     WHERE CustomerID = cusid;
-    
+
+    r_numberofinvoice := r_numberofinvoice1 + r_numberofinvoice2;
+
+    -- Dem so luong chi nhanh da mua
+    IF (r_numberofinvoice1 = 0 OR r_numberofinvoice2 = 0) THEN
+        r_numberofbranch := 1;
+    ELSE 
+        r_numberofbranch := 2;
+    END IF;
+
     SELECT *
-    INTO r_invoice
+    INTO r_invoice1
     FROM CN02.INVOICE
     WHERE CustomerID = cusid
     ORDER BY InvoiceDate DESC
     FETCH FIRST 1 ROWS ONLY;
+
+    SELECT *
+    INTO r_invoice2
+    FROM CN01.INVOICE@GD_CN01
+    WHERE CustomerID = cusid
+    ORDER BY InvoiceDate DESC
+    FETCH FIRST 1 ROWS ONLY;
+
+    IF r_invoice1.InvoiceDate > r_invoice2.InvoiceDate THEN
+    BEGIN
+        v_invoicedate := r_invoice1.InvoiceDate;
+        v_branchid := r_invoice1.BranchID;
+        v_invoiceid := r_invoice1.InvoiceID;
+    END
+    ELSE 
+    BEGIN
+        v_invoicedate := r_invoice2.InvoiceDate;
+        v_branchid := r_invoice2.BranchID;
+        v_invoiceid := r_invoice2.InvoiceID;
+    END
+    END IF;
     
     SELECT *
     INTO r_branch
     FROM CN02.BRANCH
-    WHERE BranchID = r_invoice.BranCHID;
+    WHERE BranchID = v_branchid;
 
     DBMS_OUTPUT.PUT_LINE('---------------------------------------------');
     DBMS_OUTPUT.PUT_LINE('         THONG TIN KHACH HANG: ' || r_customerinfo.CustomerID);
@@ -344,8 +385,8 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('   Tich luy: ' || r_customermanager.CumulativeTotal );
     DBMS_OUTPUT.PUT_LINE('   Thanh vien: ' || r_customerinfo.CustomerType );
     DBMS_OUTPUT.PUT_LINE('=============================================');
-    DBMS_OUTPUT.PUT_LINE('   Don hang gan day: ' || r_invoice.InvoiceID || ' - ' || r_invoice.InvoiceDate);
-    DBMS_OUTPUT.PUT_LINE('   Chi nhanh gan day: ' || r_invoice.BranchID || ' - ' || r_branch.BranchName);
+    DBMS_OUTPUT.PUT_LINE('   Don hang gan day: ' || v_invoiceid || ' - ' || v_invoicedate);
+    DBMS_OUTPUT.PUT_LINE('   Chi nhanh gan day: ' || v_branchid || ' - ' || r_branch.BranchName);
     DBMS_OUTPUT.PUT_LINE('   Ngay xuat: ' || SYSDATE);
     DBMS_OUTPUT.PUT_LINE('---------------------------------------------');
 
@@ -400,15 +441,19 @@ BEGIN
     WHERE BranchID = in_branch AND MenuID = in_menu;
     
     IF in_stage = 0 THEN
+    BEGIN
         UPDATE CN02.MANAGEMENU_STAFF
         SET Status = 'Khong Duoc Phep Ban'
         WHERE BranchID = in_branch AND MenuID = in_menu;
         v_status := 'Khong Duoc Phep Ban';
+    END
     ELSE
+    BEGIN
         UPDATE CN02.MANAGEMENU_STAFF
         SET Status = 'Duoc Phep Ban'
         WHERE BranchID = in_branch AND MenuID = in_menu;
         v_status := 'Duoc Phep Ban';
+    END
     END IF;
     
     DBMS_OUTPUT.PUT_LINE('=============================================================');
