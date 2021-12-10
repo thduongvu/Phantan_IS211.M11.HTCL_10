@@ -1,6 +1,3 @@
--- QUERY
---
---
 -- MAY 01
 -- TAO CAC QUYEN:
 -- Role: Manager
