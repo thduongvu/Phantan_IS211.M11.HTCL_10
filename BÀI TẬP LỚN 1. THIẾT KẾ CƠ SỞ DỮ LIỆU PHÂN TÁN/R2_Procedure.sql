@@ -93,94 +93,100 @@ END;
   3/ Avocado Panna Cotta Tart --- 12 --- 288000
 ========================================================== */
 
--- Procedure 2// Cap nhat tich luy cua khach hang theo thang [input: thang]
-CREATE OR REPLACE PROCEDURE calculateCumulativeTotal (in_month IN VARCHAR2) AS
-    v_total NUMBER;
-    cur_cusid VARCHAR2(5);
-    CURSOR CUR IS SELECT CustomerID
-                    FROM CN02.INVOICE
-                    WHERE to_char(InvoiceDate,'mm') = in_month;
-    v_type CUSTOMER_INFO.CustomerType%TYPE;
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('==================================================================');
-    -- Mac dinh loai khach hang la: Stardard
-    v_type := 'Stardard';
-    -- In chi tiet cap nhat
-    OPEN CUR;
-    LOOP 
-        FETCH CUR INTO cur_cusid;
-        EXIT WHEN CUR%NOTFOUND;
-
+-- Procedure 2// Cap nhat tich luy cua khach hang
+CREATE OR REPLACE PROCEDURE calculateCumulativeTotal AS  
+    v_total NUMBER;  
+    v_total1 NUMBER;  
+    v_total2 NUMBER;  
+    cur_cusid VARCHAR2(5);  
+    CURSOR CUR IS SELECT CustomerID  
+                    FROM CN02.CUSTOMER_MANAGER; 
+    v_type CN02.CUSTOMER_INFO.CustomerType%TYPE;  
+BEGIN  
+    DBMS_OUTPUT.PUT_LINE('==================================================================');  
+    
+    OPEN CUR;  
+    LOOP   
+        FETCH CUR INTO cur_cusid;  
+        EXIT WHEN CUR%NOTFOUND;  
+         
+        v_type := 'Stardard';
+        v_total := 0;
+        
         -- Tinh tich luy cua khach hang
-        SELECT SUM (Total) 
-        INTO v_total
-        FROM (  SELECT Total
-                FROM CN02.INVOICE
-                WHERE CustomerID = cur_cusid;
-                UNION
-                SELECT Total
-                FROM CN01.INVOICE@GD_CN01
-                WHERE CustomerID = cur_cusid;);
-
+        SELECT sum(Total)   
+        INTO v_total1
+        FROM CN02.INVOICE  
+        WHERE CustomerID = cur_cusid; 
+        
+        SELECT sum(Total)   
+        INTO v_total2 
+        FROM CN01.INVOICE@GD_CN01
+        WHERE CustomerID = cur_cusid; 
+        
+        v_total := v_total1 + v_total2;
+        
         -- Cap nhat tich luy cua khach hang
         UPDATE CN02.CUSTOMER_MANAGER
         SET CumulativeTotal = v_total
         WHERE CustomerID = cur_cusid; 
+
         UPDATE CN01.CUSTOMER_MANAGER@GD_CN01
         SET CumulativeTotal = v_total
-        WHERE CustomerID = cur_cusid; 
-
-        -- Cap nhap loai khach hang
-        IF v_total > 1000000 AND v_total <= 3000000 THEN
+        WHERE CustomerID = cur_cusid;   
+  
+        IF v_total > 1000000 AND v_total <= 3000000 THEN  
             UPDATE CN02.CUSTOMER_INFO
             SET CUSTOMER_INFO.CustomerType = 'Silver'
             WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
+
             UPDATE CN01.CUSTOMER_INFO@GD_CN01
             SET CUSTOMER_INFO.CustomerType = 'Silver'
             WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
             v_type := 'Silver';
-        ELSIF v_total > 3000000 THEN
+        ELSIF v_total > 3000000 THEN  
             UPDATE CN02.CUSTOMER_INFO
             SET CUSTOMER_INFO.CustomerType = 'Gold'
             WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
+
             UPDATE CN01.CUSTOMER_INFO@GD_CN01
             SET CUSTOMER_INFO.CustomerType = 'Gold'
             WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
-            v_type := 'Gold';
+            v_type := 'Gold';  
+        END IF;  
+        
+        IF v_total != 0 THEN
+        DBMS_OUTPUT.PUT_LINE('   Cap nhat thanh cong tich luy cua: ' || cur_cusid || ' = ' ||  v_total || ' - ' || v_type);  
         END IF;
         
-        DBMS_OUTPUT.PUT_LINE('   Cap nhat thanh cong tich luy cua: ' || cur_cusid || ' = ' ||  v_total || ' - ' || v_type);
-    END LOOP;
-    CLOSE CUR;
-    DBMS_OUTPUT.PUT_LINE('==================================================================');
-    
-    EXCEPTION
-    WHEN OTHERS THEN
-    DBMS_OUTPUT.PUT_LINE(SYSDATE || ' Error: Khong the thuc hien!!');
-END;
+    END LOOP;  
+    CLOSE CUR;  
+    DBMS_OUTPUT.PUT_LINE('==================================================================');  
+      
+    EXCEPTION  
+    WHEN OTHERS THEN  
+    DBMS_OUTPUT.PUT_LINE(SYSDATE || ' Error: Khong the thuc hien!!');  
+END; 
 
 -- Run Statement 
 BEGIN
-    calculateCumulativeTotal('11');
+    calculateCumulativeTotal;
 END;
 
 /* ==================================================================
-   Cap nhat thanh cong tich luy cua: CUS06 = 288000 - Stardard
-   Cap nhat thanh cong tich luy cua: CUS07 = 228000 - Stardard
-   Cap nhat thanh cong tich luy cua: CUS08 = 300000 - Stardard
-   Cap nhat thanh cong tich luy cua: CUS09 = 768000 - Stardard
-   Cap nhat thanh cong tich luy cua: CUS10 = 1530000 - Silver
-   Cap nhat thanh cong tich luy cua: CUS11 = 620000 - Silver
-   Cap nhat thanh cong tich luy cua: CUS12 = 660000 - Silver
-   Cap nhat thanh cong tich luy cua: CUS13 = 384000 - Silver
-   Cap nhat thanh cong tich luy cua: CUS32 = 528000 - Silver
-   Cap nhat thanh cong tich luy cua: CUS20 = 1528000 - Silver
-   Cap nhat thanh cong tich luy cua: CUS11 = 620000 - Silver
-   Cap nhat thanh cong tich luy cua: CUS17 = 480000 - Silver
-   Cap nhat thanh cong tich luy cua: CUS05 = 624000 - Silver
-   Cap nhat thanh cong tich luy cua: CUS30 = 912000 - Silver
-   Cap nhat thanh cong tich luy cua: CUS10 = 1530000 - Silver
-   Cap nhat thanh cong tich luy cua: CUS20 = 1528000 - Silver
+   Cap nhat thanh cong tich luy cua: CUS05 = 1248000 - Silver
+   Cap nhat thanh cong tich luy cua: CUS06 = 576000 - Stardard
+   Cap nhat thanh cong tich luy cua: CUS07 = 456000 - Stardard
+   Cap nhat thanh cong tich luy cua: CUS08 = 600000 - Stardard
+   Cap nhat thanh cong tich luy cua: CUS09 = 1536000 - Silver
+   Cap nhat thanh cong tich luy cua: CUS10 = 3060000 - Gold
+   Cap nhat thanh cong tich luy cua: CUS11 = 1240000 - Silver
+   Cap nhat thanh cong tich luy cua: CUS12 = 1320000 - Silver
+   Cap nhat thanh cong tich luy cua: CUS13 = 768000 - Stardard
+   Cap nhat thanh cong tich luy cua: CUS17 = 960000 - Stardard
+   Cap nhat thanh cong tich luy cua: CUS20 = 3056000 - Gold
+   Cap nhat thanh cong tich luy cua: CUS30 = 1824000 - Silver
+   Cap nhat thanh cong tich luy cua: CUS32 = 1056000 - Silver
 ================================================================== */
 
 -- Procedure 3// In hoa don [input: ma hoa don]
