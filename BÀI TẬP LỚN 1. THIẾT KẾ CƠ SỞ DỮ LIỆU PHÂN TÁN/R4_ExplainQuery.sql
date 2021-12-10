@@ -145,6 +145,7 @@ BEGIN
     EXCEPTION  
     WHEN OTHERS THEN  
     DBMS_OUTPUT.PUT_LINE(SYSDATE || ' Error: Khong the thuc hien!!');  
+    COMMIT;
 END; 
 
 -- Run Statement 
@@ -248,3 +249,15 @@ SET     Stage = 1;
 12/ Explain Query: FILE: EXPLAIN QUERY
 
 
+CREATE OR REPLACE PROCEDURE calculateCumulativeTotal AS       
+BEGIN  
+    DBMS_OUTPUT.PUT_LINE('ok');  
+    
+    EXCEPTION  
+    WHEN OTHERS THEN  
+    DBMS_OUTPUT.PUT_LINE(SYSDATE || ' Error: Khong the thuc hien!!');  
+END; 
+
+BEGIN 
+    calculateCumulativeTotal;
+END;
