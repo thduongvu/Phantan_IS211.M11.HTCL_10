@@ -476,3 +476,65 @@ END;
   Thong tin: ME30 - Tra Sua Okinawa Coffee
   Trang thai: 0 - Khong Duoc Phep Ban
 ============================================================= */
+
+
+CREATE OR REPLACE PROCEDURE calculateCumulativeTotal AS  
+    v_total NUMBER;  
+    cur_cusid VARCHAR2(5);  
+    CURSOR CUR IS SELECT CustomerID  
+                    FROM CN02.CUSTOMER_MANAGER; 
+    v_type CN02.CUSTOMER_INFO.CustomerType%TYPE;  
+BEGIN  
+    DBMS_OUTPUT.PUT_LINE('==================================================================');  
+    
+    OPEN CUR;  
+    LOOP   
+        FETCH CUR INTO cur_cusid;  
+        EXIT WHEN CUR%NOTFOUND;  
+         
+        v_type := 'Stardard';
+        v_total := 0;
+        
+        -- Tinh tich luy cua khach hang
+        SELECT sum(Total)   
+        INTO v_total
+        FROM CN02.INVOICE  
+        WHERE CustomerID = cur_cusid; 
+        
+        -- Cap nhat tich luy cua khach hang
+        UPDATE CN02.CUSTOMER_MANAGER
+        SET CumulativeTotal = v_total
+        WHERE CustomerID = cur_cusid; 
+  
+        IF v_total > 1000000 AND v_total <= 3000000 THEN 
+            UPDATE CN02.CUSTOMER_INFO
+            SET CUSTOMER_INFO.CustomerType = 'Silver'
+            WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
+
+            v_type := 'Silver';
+        ELSIF v_total > 3000000 THEN  
+            UPDATE CN02.CUSTOMER_INFO
+            SET CUSTOMER_INFO.CustomerType = 'Gold'
+            WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
+
+            v_type := 'Gold';  
+        END IF;  
+        
+        IF v_total != 0 THEN
+        DBMS_OUTPUT.PUT_LINE('   Cap nhat thanh cong tich luy cua: ' || cur_cusid || ' = ' ||  v_total || ' - ' || v_type);  
+        END IF;
+        
+    END LOOP;  
+    CLOSE CUR;  
+    DBMS_OUTPUT.PUT_LINE('==================================================================');  
+      
+    EXCEPTION  
+    WHEN OTHERS THEN  
+    DBMS_OUTPUT.PUT_LINE(SYSDATE || ' Error: Khong the thuc hien!!');  
+END; 
+/
+
+-- Run Statement 
+BEGIN
+    calculateCumulativeTotal;
+END;
