@@ -73,9 +73,6 @@ UPDATE CN02.MANAGEMENU_MANAGER SET Stage = 0 WHERE MenuID = 'ME43' OR MenuID = '
 /* Re run query */
 
 -- 4// Director: Tim san pham duoc phep ban o chi nhanh 1 nhung khong duoc phep ban o chi nhanh 2
--- 4// Director: Tim san pham duoc phep ban o chi nhanh 1 nhung khong duoc phep ban o chi nhanh 2
--- 4// Director: Tim san pham duoc phep ban o chi nhanh 1 nhung khong duoc phep ban o chi nhanh 2
--- 4// Director: Tim san pham duoc phep ban o chi nhanh 1 nhung khong duoc phep ban o chi nhanh 2
 CONNECT Director/director;
 SELECT  MenuID, MenuName, MenuType
 FROM    CN02.MENU
@@ -90,7 +87,6 @@ AND MenuID IN ( SELECT MenuID
 /*CN2*/ SELECT * FROM CN02.MANAGEMENU_MANAGER WHERE MenuID = '';
 
 -- 5// Director: Tim hoa don mua tat ca san pham la 'Ca Phe Italy' (truy van cuc bo)
--- [unchecked]
 SELECT  INV.InvoiceID, InvoiceDate, INFO.CustomerID, CustomerName, Total, INV.EmployeeID, EmployeeName
 FROM    CN02.INVOICE INV, CN02.CUSTOMER_INFO INFO, CN02.EMPLOYEE EMP
 WHERE NOT EXISTS(   SELECT *
@@ -159,7 +155,7 @@ FROM    CN02.MENU@NV_CN02 MENU JOIN (SELECT MenuID, COUNT(BranchID) NUMBERofBRAN
 -- 9// Manager: Tim khach hang co tri gia hoa don cao nhat trong thang 11 (truy van cuc bo)
 -- [unchecked]
 CONNECT Manager/manager;
-SELECT  InvoiceID, Total, InvoiceDate, INFO.CustomerID, CustomerName, CustomerType
+SELECT  InvoiceID, Total, InvoiceDate, INFO.CustomerID, CustomerName, CustomerType, 
 FROM    CN01.CUSTOMER_INFO INFO INNER JOIN CN01.INVOICE INV
 ON      INFO.CustomerID = INV.CustomerID AND 
         InvoiceID= (SELECT InvoiceID

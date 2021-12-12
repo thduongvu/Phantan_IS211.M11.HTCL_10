@@ -2,6 +2,23 @@
 --
 -- 
 
+
+SELECT /*+ GATHER_PLAN_STATISTICS */  CustomerName, CustomerAddress, SubTotal, MenuName
+FROM (  SELECT  MenuName, CustomerID, SubTotal
+        FROM  (  SELECT CustomerID, MenuID, Subtotal 
+                 FROM ( SELECT InvoiceID, CustomerID FROM CN02.INVOICE WHERE BranchID='BR02') A
+                        INNER JOIN
+                      ( SELECT InvoiceID, MenuID, SubTotal FROM CN02.INVOICELINE) B ON A.InvoiceID=B.InvoiceID) C
+                 INNER JOIN
+              ( SELECT MenuID, MenuName FROM CN02.MENU WHERE MenuType = 'Ca Phe Italy') D ON C.MenuID=D.MenuID) E
+        INNER JOIN
+     (  SELECT CustomerID, CustomerAddress, CustomerName 
+        FROM CN02.CUSTOMER_INFO 
+        WHERE   CustomerAddress = 'Ho Chi Minh' AND CustomerType='Gold') F ON E.CustomerID=F.CustomerID;
+
+SELECT * FROM TABLE(DBMS_XPLAN.display_cursor(format=>'ALLSTATS LAST'));
+
+
 SELECT /*+ GATHER_PLAN_STATISTICS */ CI.CustomerName, CI.CustomerAddress, IL.SubTotal , MN.MenuName 
 FROM    CN02.CUSTOMER_INFO CI, CN02.INVOICE IV, CN02.INVOICELINE IL, CN02.BRANCH BR, CN02.MENU MN 
 WHERE   BR.BranchID = IV.BranchID AND IV.InvoiceID = IL.InvoiceID AND 
@@ -10,24 +27,32 @@ WHERE   BR.BranchID = IV.BranchID AND IV.InvoiceID = IL.InvoiceID AND
         AND CI.CustomerType = 'Gold' AND MN.MenuType = 'Ca Phe Italy';
 
 
-SELECT /*+ GATHER_PLAN_STATISTICS */  CustomerName, CustomerAddress, Subtotal, MenuName
-FROM (  SELECT BranchName, MenuName, CustomerID
-        FROM (  SELECT  BranchName, InvoiceID, CustomerID
-                FROM (  SELECT InvoiceID, CustomerID FROM CN02.INVOICE WHERE BranchID='BR02') E 
+SELECT /*+ GATHER_PLAN_STATISTICS */ CI.CustomerName, CI.CustomerAddress, IL.SubTotal , MN.MenuName
+FROM CN02.CUSTOMER_INFO CI, CN02.INVOICE IV, CN02.INVOICELINE IL, CN02.BRANCH BR, CN02.MENU MN
+WHERE BR.BranchID = IV.BranchID AND IV.InvoiceID = IL.InvoiceID AND
+MN.MenuID = IL.MenuID AND CI.CustomerID = IV.CustomerID AND
+CI.CustomerAddress = 'Ho Chi Minh' AND BR.BranchID = 'BR02' AND
+CI.CustomerType = 'Gold' AND MN.MenuType = 'Ca Phe Italy';
+
+SELECT PLAN_TABLE_OUTPUT FROM TABLE(DBMS_XPLAN.DISPLAY());
+
+
+SELECT /*+ GATHER_PLAN_STATISTICS */  CustomerName, CustomerAddress, SubTotal, MenuName
+FROM (  SELECT  MenuName, CustomerID, SubTotal
+        FROM  (  SELECT InvoiceID, CustomerID FROM CN02.INVOICE WHERE BranchID='BR02') E 
                             INNER JOIN
-                            (   SELECT  MenuName, InvoiceID
+                            (   SELECT  MenuName, InvoiceID, SubTotal
                                 FROM (  SELECT  MenuID, MenuName 
-                                        FROM    CN02.MENU 
+                                        FROM    MENU 
                                         WHERE   MenuType = 'Ca Phe Italy') C 
                                         INNER JOIN
-                                        (   SELECT  InvoiceID, MenuID, Subtotal 
-                                            FROM    CN02.INVOICELINE)  D ON C.MenuID=D.MenuID) F ON E.InvoiceID = F.InvoiceID) H 
+                                        (   SELECT  InvoiceID, MenuID, SubTotal 
+                                            FROM    INVOICELINE)  D ON C.MENUID=D.MENUID) F ON E.InvoiceID = F.InvoiceID) H 
                                             INNER JOIN
                                             (   SELECT  CustomerID, CustomerAddress, CustomerName 
-                                                FROM    CN02.CUSTOMER_INFO 
+                                                FROM    CUSTOMER_INFO 
                                                 WHERE   CustomerAddress = 'Ho Chi Minh' AND
-                                                        CustomerType='Gold') 
-                                                        G ON H.CustomerID = G.CustomerID);
+                                                        CustomerType='Stardard') G ON H.CustomerID = G.CustomerID);
 
 
 SELECT CustomerName, CustomerAddress, Subtotal, MenuName 
