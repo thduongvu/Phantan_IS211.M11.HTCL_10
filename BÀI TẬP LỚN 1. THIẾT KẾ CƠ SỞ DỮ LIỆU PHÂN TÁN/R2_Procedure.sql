@@ -344,67 +344,108 @@ CREATE OR REPLACE PROCEDURE printCustomerInfo (cusid IN VARCHAR2) AS
     r_numberofinvoice2 NUMBER;
     r_numberofinvoice NUMBER;
     r_numberofbranch NUMBER;
-    r_invoice1 CN02.INVOICE%ROWTYPE;
-    r_invoice2 CN02.INVOICE%ROWTYPE;
-    r_branch CN02.BRANCH%ROWTYPE;
-    v_invoicedate CN02.INVOICE.InvoiceDate%ROW;
-    v_branchid CN2.BRANCH.BranchID%ROW;
-    v_invoiceid CN2.INVOICE.InvoiceID%ROW;
+    r_invoice1 CNO2.INVOICE%ROWTYPE;
+    r_invoice2 CNO2.INVOICE%ROWTYPE;
+    r_branch CNO2.BRANCH%ROWTYPE;
+    v_invoicedate CNO2.INVOICE.InvoiceDate%TYPE;
+    v_branchid CNO2.BRANCH.BranchID%TYPE;
+    v_invoiceid CNO2.INVOICE.InvoiceID%TYPE;
 BEGIN
     r_numberofinvoice := 0; 
     
     SELECT * 
     INTO r_customerinfo
-    FROM CN02.CUSTOMER_INFO 
+    FROM CNO2.CUSTOMER_INFO 
     WHERE CustomerID = cusid;
     
     SELECT *
     INTO r_customermanager
-    FROM CN02.CUSTOMER_MANAGER
+    FROM CNO2.CUSTOMER_MANAGER
     WHERE CustomerID = cusid;
     
     -- Dem so luong hoa don da mua
     SELECT count(CustomerID) 
     INTO r_numberofinvoice1
-    FROM CN02.INVOICE
+    FROM CNO2.INVOICE
     WHERE CustomerID = cusid;
 
     SELECT count(CustomerID) 
     INTO r_numberofinvoice2
-    FROM CN01.INVOICE@GD_CN01
+    FROM CNO1.INVOICE@GD_CN01
     WHERE CustomerID = cusid;
 
-    r_numberofinvoice := r_numberofinvoice1 + r_numberofinvoice2;
-
-    -- Dem so luong chi nhanh da mua
-    IF (r_numberofinvoice1 = 0 OR r_numberofinvoice2 = 0) THEN
-        r_numberofbranch := 1;
-    ELSE 
+    IF r_numberofinvoice1 != 0 AND r_numberofinvoice2 != 0 THEN
         r_numberofbranch := 2;
-    END IF;
+        r_numberofinvoice := r_numberofinvoice1 + r_numberofinvoice2;
 
-    SELECT *
-    INTO r_invoice1
-    FROM CN02.INVOICE
-    WHERE CustomerID = cusid
-    ORDER BY InvoiceDate DESC
-    FETCH FIRST 1 ROWS ONLY;
+        SELECT *
+        INTO r_invoice1
+        FROM CNO2.INVOICE
+        WHERE CustomerID = cusid 
+        ORDER BY InvoiceDate DESC
+        FETCH FIRST 1 ROWS ONLY;
 
-    SELECT *
-    INTO r_invoice2
-    FROM CN01.INVOICE@GD_CN01
-    WHERE CustomerID = cusid
-    ORDER BY InvoiceDate DESC
-    FETCH FIRST 1 ROWS ONLY;
+        SELECT *
+        INTO r_invoice2
+        FROM CNO1.INVOICE@GD_CN01
+        WHERE CustomerID = cusid 
+        ORDER BY InvoiceDate DESC
+        FETCH FIRST 1 ROWS ONLY;
 
-    IF r_invoice1.InvoiceDate > r_invoice2.InvoiceDate THEN
-        v_invoicedate := r_invoice1.InvoiceDate;
-        v_branchid := r_invoice1.BranchID;
-        v_invoiceid := r_invoice1.InvoiceID;
-    ELSE 
-        v_invoicedate := r_invoice2.InvoiceDate;
-        v_branchid := r_invoice2.BranchID;
-        v_invoiceid := r_invoice2.InvoiceID;
+        IF r_invoice1.InvoiceDate > r_invoice2.InvoiceDate THEN
+            v_invoicedate := r_invoice1.InvoiceDate;
+            v_branchid := r_invoice1.BranchID;
+            v_invoiceid := r_invoice1.InvoiceID;
+        ELSE 
+            v_invoicedate := r_invoice2.InvoiceDate;
+            v_branchid := r_invoice2.BranchID;
+            v_invoiceid := r_invoice2.InvoiceID;
+        END IF;
+        
+    ELSIF r_numberofinvoice1 != 0 OR r_numberofinvoice2 != 0 THEN
+        IF r_numberofinvoice1 != 0 THEN
+            r_numberofbranch := 1;
+            r_numberofinvoice := r_numberofinvoice1;
+
+            SELECT *
+            INTO r_invoice1
+            FROM CNO2.INVOICE
+            WHERE CustomerID = cusid
+            ORDER BY InvoiceDate DESC
+            FETCH FIRST 1 ROWS ONLY;
+
+            v_invoicedate := r_invoice1.InvoiceDate;
+            v_branchid := r_invoice1.BranchID;
+            v_invoiceid := r_invoice1.InvoiceID;
+        ELSE
+            r_numberofbranch := 1;
+            r_numberofinvoice := r_numberofinvoice2;
+
+            SELECT *
+            INTO r_invoice2
+            FROM CNO1.INVOICE@GD_CN01
+            WHERE CustomerID = cusid
+            ORDER BY InvoiceDate DESC
+            FETCH FIRST 1 ROWS ONLY;
+
+            v_invoicedate := r_invoice2.InvoiceDate;
+            v_branchid := r_invoice2.BranchID;
+            v_invoiceid := r_invoice2.InvoiceID;
+        END IF;
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('---------------------------------------------');
+        DBMS_OUTPUT.PUT_LINE('         THONG TIN KHACH HANG: ' || r_customerinfo.CustomerID);
+        DBMS_OUTPUT.PUT_LINE('=============================================');
+        DBMS_OUTPUT.PUT_LINE('   Ho va ten: ' || r_customerinfo.CustomerName );
+        DBMS_OUTPUT.PUT_LINE('   So dien thoai: ' || r_customerinfo.PhoneNumber );
+        DBMS_OUTPUT.PUT_LINE('   Dia chi: ' || r_customerinfo.CustomerAddress );
+        DBMS_OUTPUT.PUT_LINE('   Ngay sinh: ' || r_customerinfo.Birthday);
+        DBMS_OUTPUT.PUT_LINE('  _________________________________________');
+        DBMS_OUTPUT.PUT_LINE('   ** Khach hang chua mua hang tai he thong');
+        DBMS_OUTPUT.PUT_LINE('   Thanh vien: ' || r_customerinfo.CustomerType );
+        DBMS_OUTPUT.PUT_LINE('=============================================');
+        DBMS_OUTPUT.PUT_LINE('   Ngay xuat: ' || SYSDATE);
+        DBMS_OUTPUT.PUT_LINE('---------------------------------------------');
     END IF;
     
     SELECT *
@@ -412,28 +453,31 @@ BEGIN
     FROM CN02.BRANCH
     WHERE BranchID = v_branchid;
 
-    DBMS_OUTPUT.PUT_LINE('---------------------------------------------');
-    DBMS_OUTPUT.PUT_LINE('         THONG TIN KHACH HANG: ' || r_customerinfo.CustomerID);
-    DBMS_OUTPUT.PUT_LINE('=============================================');
-    DBMS_OUTPUT.PUT_LINE('   Ho va ten: ' || r_customerinfo.CustomerName );
-    DBMS_OUTPUT.PUT_LINE('   So dien thoai: ' || r_customerinfo.PhoneNumber );
-    DBMS_OUTPUT.PUT_LINE('   Dia chi: ' || r_customerinfo.CustomerAddress );
-    DBMS_OUTPUT.PUT_LINE('   Ngay sinh: ' || r_customerinfo.Birthday);
-    DBMS_OUTPUT.PUT_LINE('  _________________________________________');
-    DBMS_OUTPUT.PUT_LINE('   So luong don hang da thuc hien: ' || r_numberofinvoice);
-    DBMS_OUTPUT.PUT_LINE('   So chi nhanh da mua hang: ' || r_numberofbranch);
-    DBMS_OUTPUT.PUT_LINE('   Tich luy: ' || r_customermanager.CumulativeTotal );
-    DBMS_OUTPUT.PUT_LINE('   Thanh vien: ' || r_customerinfo.CustomerType );
-    DBMS_OUTPUT.PUT_LINE('=============================================');
-    DBMS_OUTPUT.PUT_LINE('   Don hang gan day: ' || v_invoiceid || ' - ' || v_invoicedate);
-    DBMS_OUTPUT.PUT_LINE('   Chi nhanh gan day: ' || v_branchid || ' - ' || r_branch.BranchName);
-    DBMS_OUTPUT.PUT_LINE('   Ngay xuat: ' || SYSDATE);
-    DBMS_OUTPUT.PUT_LINE('---------------------------------------------');
+    IF r_numberofinvoice != 0 THEN
+        DBMS_OUTPUT.PUT_LINE('---------------------------------------------');
+        DBMS_OUTPUT.PUT_LINE('         THONG TIN KHACH HANG: ' || r_customerinfo.CustomerID);
+        DBMS_OUTPUT.PUT_LINE('=============================================');
+        DBMS_OUTPUT.PUT_LINE('   Ho va ten: ' || r_customerinfo.CustomerName );
+        DBMS_OUTPUT.PUT_LINE('   So dien thoai: ' || r_customerinfo.PhoneNumber );
+        DBMS_OUTPUT.PUT_LINE('   Dia chi: ' || r_customerinfo.CustomerAddress );
+        DBMS_OUTPUT.PUT_LINE('   Ngay sinh: ' || r_customerinfo.Birthday);
+        DBMS_OUTPUT.PUT_LINE('  _________________________________________');
+        DBMS_OUTPUT.PUT_LINE('   So luong don hang da thuc hien: ' || r_numberofinvoice);
+        DBMS_OUTPUT.PUT_LINE('   So chi nhanh da mua hang: ' || r_numberofbranch);
+        DBMS_OUTPUT.PUT_LINE('   Tich luy: ' || r_customermanager.CumulativeTotal );
+        DBMS_OUTPUT.PUT_LINE('   Thanh vien: ' || r_customerinfo.CustomerType );
+        DBMS_OUTPUT.PUT_LINE('=============================================');
+        DBMS_OUTPUT.PUT_LINE('   Don hang gan day: ' || v_invoiceid || ' - ' || v_invoicedate);
+        DBMS_OUTPUT.PUT_LINE('   Chi nhanh gan day: ' || v_branchid || ' - ' || r_branch.BranchName);
+        DBMS_OUTPUT.PUT_LINE('   Ngay xuat: ' || SYSDATE);
+        DBMS_OUTPUT.PUT_LINE('---------------------------------------------');
+    END IF;
 
     EXCEPTION
     WHEN OTHERS THEN
-    DBMS_OUTPUT.PUT_LINE('Error: Khach hang nay khong ton tai trong he thong!!');
+    DBMS_OUTPUT.PUT_LINE('Done!!');
 END;
+/
 
 -- Run Statement
 BEGIN
@@ -441,6 +485,15 @@ BEGIN
 END;
 /
 
+BEGIN
+    printCustomerInfo('C114');
+END;
+/
+
+BEGIN
+    printCustomerInfo('C110');
+END;
+/
 /* ---------------------------------------------
          THONG TIN KHACH HANG: CUS11
 =============================================
