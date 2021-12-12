@@ -98,17 +98,19 @@ END;
 ========================================================== */
 
 -- Procedure 2// Cap nhat tich luy cua khach hang
+-- [unchecked]
 CREATE OR REPLACE PROCEDURE calculateCumulativeTotal AS  
-    v_total NUMBER;  
     v_total1 NUMBER;  
-    v_total2 NUMBER;  
+    v_total2 NUMBER;
+    v_total NUMBER;
     cur_cusid VARCHAR2(5);  
     CURSOR CUR IS SELECT CustomerID  
                     FROM CN02.CUSTOMER_MANAGER; 
     v_type CN02.CUSTOMER_INFO.CustomerType%TYPE;  
+    r_manager CN02.CUSTOMER_MANAGER%ROWTYPE;  
 BEGIN  
     DBMS_OUTPUT.PUT_LINE('==================================================================');  
-    
+
     OPEN CUR;  
     LOOP   
         FETCH CUR INTO cur_cusid;  
@@ -116,51 +118,88 @@ BEGIN
          
         v_type := 'Stardard';
         v_total := 0;
+        v_total1 := 0;
+        v_total2 := 0;
         
         -- Tinh tich luy cua khach hang
         SELECT sum(Total)   
         INTO v_total1
         FROM CN02.INVOICE  
-        WHERE CustomerID = cur_cusid; 
+        WHERE CustomerID = cur_cusid AND BranchID = 'BR02'; 
         
         SELECT sum(Total)   
-        INTO v_total2 
-        FROM CN01.INVOICE@GD_CN01
-        WHERE CustomerID = cur_cusid; 
-        
-        v_total := v_total1 + v_total2;
+        INTO v_total2
+        FROM CN01.INVOICE@GD_CN01  
+        WHERE CustomerID = cur_cusid AND BranchID = 'BR15';
         
         -- Cap nhat tich luy cua khach hang
-        UPDATE CN02.CUSTOMER_MANAGER
-        SET CumulativeTotal = v_total
-        WHERE CustomerID = cur_cusid; 
-
-        UPDATE CN01.CUSTOMER_MANAGER@GD_CN01
-        SET CumulativeTotal = v_total
-        WHERE CustomerID = cur_cusid;   
-  
+        IF v_total1 != 0 AND v_total2 != 0 THEN
+            v_total := v_total1 + v_total2;
+            UPDATE CN01.CUSTOMER_MANAGER@GD_CN01
+            SET CumulativeTotal = v_total
+            WHERE CustomerID = cur_cusid;
+            UPDATE CN02.CUSTOMER_MANAGER
+            SET CumulativeTotal = v_total
+            WHERE CustomerID = cur_cusid;
+            
+        ELSIF v_total1 != 0 OR v_total2 != 0  THEN
+        BEGIN
+            IF v_total1 != 0 THEN
+                v_total := v_total1;
+                UPDATE CN01.CUSTOMER_MANAGER@GD_CN01
+                SET CumulativeTotal = v_total
+                WHERE CustomerID = cur_cusid;
+                UPDATE CN02.CUSTOMER_MANAGER
+                SET CumulativeTotal = v_total
+                WHERE CustomerID = cur_cusid;
+                
+            ELSE
+                v_total := v_total2;
+                UPDATE CN01.CUSTOMER_MANAGER@GD_CN01
+                SET CumulativeTotal = v_total
+                WHERE CustomerID = cur_cusid;
+                UPDATE CN02.CUSTOMER_MANAGER
+                SET CumulativeTotal = v_total
+                WHERE CustomerID = cur_cusid;
+            END IF;
+        END;
+        ELSE
+            v_total := 0;
+            UPDATE CN01.CUSTOMER_MANAGER@GD_CN01
+            SET CumulativeTotal = v_total
+            WHERE CustomerID = cur_cusid;
+            UPDATE CNO2.CUSTOMER_MANAGER
+            SET CumulativeTotal = v_total
+            WHERE CustomerID = cur_cusid;
+        END IF;
+        
         IF v_total > 1000000 AND v_total <= 3000000 THEN 
-            UPDATE CN02.CUSTOMER_INFO
-            SET CUSTOMER_INFO.CustomerType = 'Silver'
-            WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
-
             UPDATE CN01.CUSTOMER_INFO@GD_CN01
-            SET CUSTOMER_INFO.CustomerType = 'Silver'
-            WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
+            SET CustomerType = 'Silver'
+            WHERE CustomerID = cur_cusid;
+            UPDATE CN02.CUSTOMER_INFO
+            SET CustomerType = 'Silver'
+            WHERE CustomerID = cur_cusid;
             v_type := 'Silver';
+            
         ELSIF v_total > 3000000 THEN  
-            UPDATE CN02.CUSTOMER_INFO
-            SET CUSTOMER_INFO.CustomerType = 'Gold'
-            WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
-
             UPDATE CN01.CUSTOMER_INFO@GD_CN01
-            SET CUSTOMER_INFO.CustomerType = 'Gold'
-            WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
+            SET CustomerType = 'Gold'
+            WHERE CustomerID = cur_cusid;
+            UPDATE CN02.CUSTOMER_INFO
+            SET CustomerType = 'Gold'
+            WHERE CustomerID = cur_cusid;
             v_type := 'Gold';  
         END IF;  
         
+        SELECT * 
+        INTO r_manager
+        FROM CN02.CUSTOMER_MANAGER
+        WHERE CustomerID = cur_cusid;
+        
         IF v_total != 0 THEN
-        DBMS_OUTPUT.PUT_LINE('   Cap nhat thanh cong tich luy cua: ' || cur_cusid || ' = ' ||  v_total || ' - ' || v_type);  
+            v_check := v_check + 1;
+            DBMS_OUTPUT.PUT_LINE('   Cap nhat thanh cong tich luy cua: ' || cur_cusid || ' = ' ||  r_manager.CumulativeTotal || ' - ' || v_type || ' - ' || v_check);  
         END IF;
         
     END LOOP;  
@@ -297,6 +336,7 @@ END;
 --------------------------------------------- */
 
 -- Procedure 4// In thong tin khach hang + Hang thanh vien + Tien tich luy + So don hang da mua + So chi nhanh da mua hang [input: ma khach hang]
+-- [unchecked]
 CREATE OR REPLACE PROCEDURE printCustomerInfo (cusid IN VARCHAR2) AS
     r_customerinfo CN02.CUSTOMER_INFO%ROWTYPE;
     r_customermanager CN02.CUSTOMER_MANAGER%ROWTYPE;
@@ -409,14 +449,14 @@ END;
    Dia chi: Vung Tau
    Ngay sinh:  23/01/2001 
   _________________________________________
-   So luong don hang da thuc hien: 2
-   So chi nhanh da mua hang: 1
-   Tich luy: 310000
-   Thanh vien: Stardard
+   So luong don hang da thuc hien: 13
+   So chi nhanh da mua hang: 2
+   Tich luy: 6245000
+   Thanh vien: Gold
 =============================================
-   Don hang gan day: INV35 -  16/11/2021 
-   Chi nhanh gan day: BR15 - Riverside Residence
-   Ngay xuat:  09/12/2021 
+   Don hang gan day: IN233 -  07/12/2021 
+   Chi nhanh gan day: BR02 - Nguyen Gia Tri
+   Ngay xuat:  12/12/2021 
 --------------------------------------------- */
 
 -- Procedure 5// Cap nhat quan ly Menu [input: ma chi nhanh, ma san pham, stage]
@@ -477,13 +517,21 @@ END;
   Trang thai: 0 - Khong Duoc Phep Ban
 ============================================================= */
 
+--------------------------
+-- Test distributed procedure in centralized environment
+--
+--
 
+--------------------------
+-- Draft for procedure calculateCumulativeTotal 
+--------------------------
 CREATE OR REPLACE PROCEDURE calculateCumulativeTotal AS  
     v_total NUMBER;  
     cur_cusid VARCHAR2(5);  
     CURSOR CUR IS SELECT CustomerID  
                     FROM CN02.CUSTOMER_MANAGER; 
     v_type CN02.CUSTOMER_INFO.CustomerType%TYPE;  
+    r_manager CN02.CUSTOMER_MANAGER%ROWTYPE;  
 BEGIN  
     DBMS_OUTPUT.PUT_LINE('==================================================================');  
     
@@ -502,27 +550,38 @@ BEGIN
         WHERE CustomerID = cur_cusid; 
         
         -- Cap nhat tich luy cua khach hang
-        UPDATE CN02.CUSTOMER_MANAGER
-        SET CumulativeTotal = v_total
-        WHERE CustomerID = cur_cusid; 
+        IF v_total != 0 THEN
+            UPDATE CN02.CUSTOMER_MANAGER
+            SET CumulativeTotal = v_total
+            WHERE CustomerID = cur_cusid;
+        ELSE
+            v_total := 0;
+            UPDATE CN02.CUSTOMER_MANAGER
+            SET CumulativeTotal = 0
+            WHERE CustomerID = cur_cusid;
+        END IF;
   
+        SELECT * 
+        INTO r_manager
+        FROM CN02.CUSTOMER_MANAGER
+        WHERE CustomerID = cur_cusid;
+        
         IF v_total > 1000000 AND v_total <= 3000000 THEN 
             UPDATE CN02.CUSTOMER_INFO
-            SET CUSTOMER_INFO.CustomerType = 'Silver'
-            WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
+            SET CustomerType = 'Silver'
+            WHERE CustomerID = cur_cusid;
 
             v_type := 'Silver';
         ELSIF v_total > 3000000 THEN  
             UPDATE CN02.CUSTOMER_INFO
-            SET CUSTOMER_INFO.CustomerType = 'Gold'
-            WHERE CUSTOMER_INFO.CustomerID = cur_cusid;
+            SET CustomerType = 'Gold'
+            WHERE CustomerID = cur_cusid;
 
             v_type := 'Gold';  
         END IF;  
         
-        IF v_total != 0 THEN
-        DBMS_OUTPUT.PUT_LINE('   Cap nhat thanh cong tich luy cua: ' || cur_cusid || ' = ' ||  v_total || ' - ' || v_type);  
-        END IF;
+        DBMS_OUTPUT.PUT_LINE('   Cap nhat thanh cong tich luy cua: ' || cur_cusid || ' = ' ||  r_manager.CumulativeTotal || ' - ' || v_type);  
+
         
     END LOOP;  
     CLOSE CUR;  
@@ -538,3 +597,207 @@ END;
 BEGIN
     calculateCumulativeTotal;
 END;
+
+--------------------------
+-- Draft for procedure printCustomerInfo 
+--------------------------
+
+CREATE OR REPLACE PROCEDURE printCustomerInfo (cusid IN VARCHAR2) AS
+    r_customerinfo CUSTOMER_INFO%ROWTYPE;
+    r_customermanager CUSTOMER_MANAGER%ROWTYPE;
+    r_numberofinvoice1 NUMBER;
+    r_numberofinvoice2 NUMBER;
+    r_numberofinvoice NUMBER;
+    r_numberofbranch NUMBER;
+    r_invoice1 INVOICE%ROWTYPE;
+    r_invoice2 INVOICE%ROWTYPE;
+    r_branch BRANCH%ROWTYPE;
+    v_invoicedate INVOICE.InvoiceDate%TYPE;
+    v_branchid BRANCH.BranchID%TYPE;
+    v_invoiceid INVOICE.InvoiceID%TYPE;
+BEGIN
+    r_numberofinvoice := 0; 
+    
+    SELECT * 
+    INTO r_customerinfo
+    FROM CUSTOMER_INFO 
+    WHERE CustomerID = cusid;
+    
+    SELECT *
+    INTO r_customermanager
+    FROM CUSTOMER_MANAGER
+    WHERE CustomerID = cusid;
+    
+    -- Dem so luong hoa don da mua
+    SELECT count(CustomerID) 
+    INTO r_numberofinvoice1
+    FROM INVOICE
+    WHERE CustomerID = cusid AND BranchID = 'BR02';
+
+    SELECT count(CustomerID) 
+    INTO r_numberofinvoice2
+    FROM INVOICE
+    WHERE CustomerID = cusid AND BranchID = 'BR15';
+
+    IF r_numberofinvoice1 != 0 AND r_numberofinvoice2 != 0 THEN
+        r_numberofbranch := 2;
+        r_numberofinvoice := r_numberofinvoice1 + r_numberofinvoice2;
+        SELECT *
+        INTO r_invoice1
+        FROM INVOICE
+        WHERE CustomerID = cusid AND BranchID = 'BR02'
+        ORDER BY InvoiceDate DESC
+        FETCH FIRST 1 ROWS ONLY;
+        SELECT *
+        INTO r_invoice2
+        FROM INVOICE
+        WHERE CustomerID = cusid AND BranchID = 'BR15'
+        ORDER BY InvoiceDate DESC
+        FETCH FIRST 1 ROWS ONLY;
+        IF r_invoice1.InvoiceDate > r_invoice2.InvoiceDate THEN
+            v_invoicedate := r_invoice1.InvoiceDate;
+            v_branchid := r_invoice1.BranchID;
+            v_invoiceid := r_invoice1.InvoiceID;
+        ELSE 
+            v_invoicedate := r_invoice2.InvoiceDate;
+            v_branchid := r_invoice2.BranchID;
+            v_invoiceid := r_invoice2.InvoiceID;
+        END IF;
+        
+    ELSIF r_numberofinvoice1 != 0 OR r_numberofinvoice2 != 0 THEN
+        IF r_numberofinvoice1 != 0 THEN
+            r_numberofbranch := 1;
+            r_numberofinvoice := r_numberofinvoice1;
+            SELECT *
+            INTO r_invoice1
+            FROM INVOICE
+            WHERE CustomerID = cusid AND BranchID = 'BR02'
+            ORDER BY InvoiceDate DESC
+            FETCH FIRST 1 ROWS ONLY;
+            v_invoicedate := r_invoice1.InvoiceDate;
+            v_branchid := r_invoice1.BranchID;
+            v_invoiceid := r_invoice1.InvoiceID;
+        ELSE
+            r_numberofbranch := 1;
+            r_numberofinvoice := r_numberofinvoice2;
+            SELECT *
+            INTO r_invoice2
+            FROM INVOICE
+            WHERE CustomerID = cusid AND BranchID = 'BR15'
+            ORDER BY InvoiceDate DESC
+            FETCH FIRST 1 ROWS ONLY;
+            v_invoicedate := r_invoice2.InvoiceDate;
+            v_branchid := r_invoice2.BranchID;
+            v_invoiceid := r_invoice2.InvoiceID;
+        END IF;
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('---------------------------------------------');
+        DBMS_OUTPUT.PUT_LINE('         THONG TIN KHACH HANG: ' || r_customerinfo.CustomerID);
+        DBMS_OUTPUT.PUT_LINE('=============================================');
+        DBMS_OUTPUT.PUT_LINE('   Ho va ten: ' || r_customerinfo.CustomerName );
+        DBMS_OUTPUT.PUT_LINE('   So dien thoai: ' || r_customerinfo.PhoneNumber );
+        DBMS_OUTPUT.PUT_LINE('   Dia chi: ' || r_customerinfo.CustomerAddress );
+        DBMS_OUTPUT.PUT_LINE('   Ngay sinh: ' || r_customerinfo.Birthday);
+        DBMS_OUTPUT.PUT_LINE('  _________________________________________');
+        DBMS_OUTPUT.PUT_LINE('   ** Khach hang chua mua hang tai he thong');
+        DBMS_OUTPUT.PUT_LINE('   Thanh vien: ' || r_customerinfo.CustomerType );
+        DBMS_OUTPUT.PUT_LINE('=============================================');
+        DBMS_OUTPUT.PUT_LINE('   Ngay xuat: ' || SYSDATE);
+        DBMS_OUTPUT.PUT_LINE('---------------------------------------------');
+    END IF;
+    
+    SELECT *
+    INTO r_branch
+    FROM BRANCH
+    WHERE BranchID = v_branchid;
+
+    IF r_numberofinvoice != 0 THEN
+        DBMS_OUTPUT.PUT_LINE('---------------------------------------------');
+        DBMS_OUTPUT.PUT_LINE('         THONG TIN KHACH HANG: ' || r_customerinfo.CustomerID);
+        DBMS_OUTPUT.PUT_LINE('=============================================');
+        DBMS_OUTPUT.PUT_LINE('   Ho va ten: ' || r_customerinfo.CustomerName );
+        DBMS_OUTPUT.PUT_LINE('   So dien thoai: ' || r_customerinfo.PhoneNumber );
+        DBMS_OUTPUT.PUT_LINE('   Dia chi: ' || r_customerinfo.CustomerAddress );
+        DBMS_OUTPUT.PUT_LINE('   Ngay sinh: ' || r_customerinfo.Birthday);
+        DBMS_OUTPUT.PUT_LINE('  _________________________________________');
+        DBMS_OUTPUT.PUT_LINE('   So luong don hang da thuc hien: ' || r_numberofinvoice);
+        DBMS_OUTPUT.PUT_LINE('   So chi nhanh da mua hang: ' || r_numberofbranch);
+        DBMS_OUTPUT.PUT_LINE('   Tich luy: ' || r_customermanager.CumulativeTotal );
+        DBMS_OUTPUT.PUT_LINE('   Thanh vien: ' || r_customerinfo.CustomerType );
+        DBMS_OUTPUT.PUT_LINE('=============================================');
+        DBMS_OUTPUT.PUT_LINE('   Don hang gan day: ' || v_invoiceid || ' - ' || v_invoicedate);
+        DBMS_OUTPUT.PUT_LINE('   Chi nhanh gan day: ' || v_branchid || ' - ' || r_branch.BranchName);
+        DBMS_OUTPUT.PUT_LINE('   Ngay xuat: ' || SYSDATE);
+        DBMS_OUTPUT.PUT_LINE('---------------------------------------------');
+    END IF;
+
+    EXCEPTION
+    WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Done!!');
+END;
+/
+
+-- Run Statement
+BEGIN
+    printCustomerInfo('CUS11'); -- 2 CN
+END;
+/
+
+/* ---------------------------------------------
+         THONG TIN KHACH HANG: CUS11
+=============================================
+   Ho va ten: Nguyen Hieu Kien
+   So dien thoai: 0931127827
+   Dia chi: Vung Tau
+   Ngay sinh:  23/01/2001 
+  _________________________________________
+   So luong don hang da thuc hien: 13
+   So chi nhanh da mua hang: 2
+   Tich luy: 6245000
+   Thanh vien: Gold
+=============================================
+   Don hang gan day: IN233 -  07/12/2021 
+   Chi nhanh gan day: BR02 - Nguyen Gia Tri
+   Ngay xuat:  12/12/2021 
+--------------------------------------------- */
+
+BEGIN
+    printCustomerInfo('C114'); -- 1 CN
+END;
+/
+/* ---------------------------------------------
+         THONG TIN KHACH HANG: C114
+=============================================
+   Ho va ten: Do Hai Nam
+   So dien thoai: 0931199254
+   Dia chi: Ho Chi Minh
+   Ngay sinh:  22/07/2001 
+  _________________________________________
+   So luong don hang da thuc hien: 1
+   So chi nhanh da mua hang: 1
+   Tich luy: 114000
+   Thanh vien: Gold
+=============================================
+   Don hang gan day: IN463 -  19/09/2021 
+   Chi nhanh gan day: BR02 - Nguyen Gia Tri
+   Ngay xuat:  12/12/2021 
+--------------------------------------------- */
+
+BEGIN
+    printCustomerInfo('C110'); -- 0 CN
+END;
+/
+
+/* ---------------------------------------------
+         THONG TIN KHACH HANG: C110
+=============================================
+   Ho va ten: Hoang Nhat Mai
+   So dien thoai: 0931199250
+   Dia chi: Ho Chi Minh
+   Ngay sinh:  24/11/1999 
+  _________________________________________
+   ** Khach hang chua mua hang tai he thong
+   Thanh vien: Stardard
+=============================================
+   Ngay xuat:  12/12/2021 
+--------------------------------------------- */
