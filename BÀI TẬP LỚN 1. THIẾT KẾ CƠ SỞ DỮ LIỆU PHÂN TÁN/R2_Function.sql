@@ -20,20 +20,6 @@ BEGIN
     RETURN v_total;
 END;
 
-CREATE OR REPLACE FUNCTION calculateMonthlyRevenue(in_month IN number)
-RETURN NUMBER
-AS
-    v_total number;
-BEGIN
-    SELECT SUM (Total) 
-    INTO v_total
-    FROM (  SELECT Total
-            FROM INVOICE
-            WHERE EXTRACT(MONTH FROM InvoiceDate) = in_month);
-    RETURN v_total;
-END;
-/
-
 -- Run Statement 
 DECLARE
     in_month NUMBER;
