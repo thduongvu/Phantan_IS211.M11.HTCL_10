@@ -1,0 +1,218 @@
+sudo apt update
+sudo apt install git
+sudo apt-get install g++
+sudo apt-get install make
+sudo apt install openjdk-8-jdk -y	//cài đặt java
+
+
+sudo apt install openssh-server openssh-client -y	//cài đặt ssh
+
+
+ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa	//tạo key xác nhận không cần nhập mật khẩu
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys //copy id_rsa.pub sang file authorized_keys
+chmod 0600 ~/.ssh/authorized_keys		//chỉ có root mới chỉnh sửa
+	
+ssh localhost	//kiểm thử xem nếu đăng nhập k cần mật khẩu thì đúng, sai thì làm lại
+
+wget https://dlcdn.apache.org/hadoop/common/hadoop-3.3.1/hadoop-3.3.1.tar.gz  //cài đặt apache hadoop
+tar -xvzf ~/hadoop-3.3.1.tar.gz						      //giải nén
+
+nano ~/.bashrc	//chỉnh sửa các biến môi trường
+
+//copy tất cả vào cuối file
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+export HADOOP_HOME=/home/nova/hadoop-3.3.1
+export HADOOP_INSTALL=$HADOOP_HOME
+export HADOOP_MAPRED_HOME=$HADOOP_HOME
+export HADOOP_COMMON_HOME=$HADOOP_HOME
+export HADOOP_HDFS_HOME=$HADOOP_HOME
+export YARN_HOME=$HADOOP_HOME
+export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native
+export PATH=$PATH:$HADOOP_HOME/sbin:$HADOOP_HOME/bin
+export HADOOP_OPTS"-Djava.library.path=$HADOOP_HOME/lib/nativ"
+export ZOOKEEPER=/home/nova/apache-zookeeper-3.7.0-bin
+
+source ~/.bashrc //kiểm tra các biến môi trường
+
+sudo nano $HADOOP_HOME/etc/hadoop/hadoop-env.sh
+#Add below line in this file in the end
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+
+sudo nano $HADOOP_HOME/etc/hadoop/core-site.xml
+#Add below lines in this file(between "<configuration>" and "<"/configuration>")
+   <property>
+        <name>hadoop.tmp.dir</name>
+        <value>/home/nova/tmpdata</value>
+        <description>A base for other temporary directories.</description>
+    </property>
+    <property>
+        <name>fs.default.name</name>
+        <value>hdfs://localhost:9000</value>
+        <description>The name of the default file system></description>
+    </property>
+
+
+sudo nano $HADOOP_HOME/etc/hadoop/hdfs-site.xml
+#Add below lines in this file(between "<configuration>" and "<"/configuration>")
+<property>
+  <name>dfs.data.dir</name>
+  <value>/home/.../dfsdata/namenode</value> //nts
+</property>
+<property>
+  <name>dfs.data.dir</name>
+  <value>/home/.../dfsdata/datanode</value> //nts
+</property>
+<property>
+  <name>dfs.replication</name>
+  <value>1</value>
+</property>
+
+sudo nano $HADOOP_HOME/etc/hadoop/mapred-site.xml
+#Add below lines in this file(between "<configuration>" and "<"/configuration>")
+
+<property>
+  <name>mapreduce.framework.name</name>
+  <value>yarn</value>
+</property>
+
+sudo nano $HADOOP_HOME/etc/hadoop/yarn-site.xml
+#Add below lines in this file(between "<configuration>" and "<"/configuration>")
+<property>
+  <name>yarn.nodemanager.aux-services</name>
+  <value>mapreduce_shuffle</value>
+</property>
+<property>
+  <name>yarn.nodemanager.aux-services.mapreduce.shuffle.class</name>
+  <value>org.apache.hadoop.mapred.ShuffleHandler</value>
+</property>
+<property>
+  <name>yarn.resourcemanager.hostname</name>
+  <value>127.0.0.1</value>
+</property>
+<property>
+  <name>yarn.acl.enable</name>
+  <value>0</value>
+</property>
+<property>
+  <name>yarn.nodemanager.env-whitelist</name>
+  <value>JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,CLASSPATH_PERPEND_DISTCACHE,HADOOP_YARN_HOME,HADOOP_MAPRED_HOME</value>
+</property>
+
+hdfs namenode -format		//cấu hình lại namenode
+cd ~/hadoop-3.3.1/sbin
+./start-dfs.sh			//start hadoop
+jps				//kiểm tra các namenode
+http://localhost:9870/		//kiểm tra trên web
+
+#cài đặt và giải nèn zookeeper
+wget https://dlcdn.apache.org/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0-bin.tar.gz
+tar -xvzf ~/apache-zookeeper-3.7.0-bin.tar.gz
+
+# tạo 1 folder có đường dẫn /home/.../zoo/data
+# copy file trong /apache-zookeeper-3.7.0-bin/conf/zoo_sample.cfg và đổi tên thành zoo.cfg
+cd ~/apache-zookeeper-3.7.0-bin
+#chỉnh sửa file zoo.cfg
+nano ~/conf/zoo.cfg
+	tickTime=2000
+	dataDir=/home/nova/zoo/data
+	clientPort=2181
+	maxClientCnxns=60
+#start zookeeper
+bin/zkServer.sh start
+
+#cài đặt accumulo
+wget https://dlcdn.apache.org/accumulo/1.10.1/accumulo-1.10.1-bin.tar.gz
+tar -xvzf ~/accumulo-1.10.1-bin.tar.gz 
+cd ~/accumulo-1.10.1
+bin/bootstrap_config.sh		//config nhanh
+bin/build_native_library.sh	
+
+#chỉnh sửa các biến trong file accumulo-env.sh
+nano conf/accumulo-env.sh
+
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+export HADOOP_PREFIX=/home/.../hadoop-3.3.1
+export ZOOKEEPER=/home/.../apache-zookeeper-3.7.0-bin
+
+#chỉnh sửa trong file accumulo-site.xml
+nano conf/accumulo-site.xml
+hdfs://localhost:9000/accumulo //instance.volumes
+localhost:2181		       //zookeeper.
+PASS1234		       //instance.secret
+
+
+#khởi tạo
+bin/accumulo init
+#tạo user 
+instance name: final
+password : final
+
+cd ~/hadoop-3.3.1/sbin
+./start-dfs.sh
+
+cd ~/apache-zookeeper-3.7.0-bin
+bin/zkServer.sh start
+
+cd ~/accumulo-1.10.1
+bin/start-all.sh
+http://localhost:9995
+
+bin/accumulo shell -u root
+
+createuser training
+
+userpermissions -u training
+grant System.CREATE_TABLE -s -u training
+
+user training
+createtable test
+insert row colfamily colqualifier value
+scan
+delete row colfamily colqualifier value
+scan
+
+createuser application
+userpermissions -u application
+createtable undata
+grant -u application -t undata Table.READ
+user application
+userpermissions
+insert a b c d
+user root
+grant -u application -t undata Table.WRITE
+user application
+insert a b c d
+scan
+
+#thực hiện lệnh thông qua training code
+
+bin/accumulo classpath
+git clone https://github.com/acordova/accumulo-training-examples.git TrainingCode
+
+cd ~/accumulo-1.10.1/TrainingCode
+mvn clean install
+java -jar target/TrainingCode-1.0.jar
+java -jar target/TrainingCode-1.0.jar write -i final -z localhost:2181 -t undata -u root -p final -f ../data/UNdata_Export_20211204_042000324.csv
+java -jar target/TrainingCode-1.0.jar write -i final -z localhost:2181 -t undata -u root -p final -f ../data/UNdata_Export_20211205_141658475.csv
+java -jar target/TrainingCode-1.0.jar write -i final -z localhost:2181 -t undata -u root -p final -f ../data/UNdata_Export_20211205_142000829.csv
+#chạy file jar trong đường dẫn write data     	-i : instance
+						-z : zookeeper
+						-t : table
+						-u : user
+						-p : password
+						-f : file
+bin/accumulo shell -u root
+tables
+table undata
+scan
+
+
+
+
+
+
+
+
+
+
+
